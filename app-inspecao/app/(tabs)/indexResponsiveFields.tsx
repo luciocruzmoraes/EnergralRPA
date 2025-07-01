@@ -27,13 +27,14 @@ export default function Login() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      <TextInput placeholder="Email" onChangeText={setEmail} style={styles.input} />
-      <TextInput placeholder="Senha" secureTextEntry onChangeText={setSenha} style={styles.input} />
+      <TextInput placeholder="Email" onChangeText={setEmail} style={[styles.input, {width: screenWidth 1.5}]} />
+      <TextInput placeholder="Senha" secureTextEntry onChangeText={setSenha} style={[styles.input, {width: screenWidth 2}]} />
       <Button title="Entrar" onPress={login} />
     </View>
   );
 }
 
+const screenWidth = dimension.get("window").width;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'black', justifyContent: 'center', padding: 20 },
   title: { color: 'yellow', fontSize: 24, marginBottom: 20 },
