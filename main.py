@@ -27,7 +27,7 @@ collections = ["inspecoes", "users", "subestacoes", "equipamentos"]
 
 #Function that will read and retrieve the data from the DB 
 def getData(collectionName):
-    log.info("Fetching data from collection: {collectionName}")
+    log.info(f"Fetching data from collection: {collectionName}")
     
     dataExtracted_Rough = db.collection(collectionName).stream()
     
@@ -51,7 +51,9 @@ def sendEmail_Fail():
 def main():
     log.info("- Main Starting -")
 
-    print(getData(collections[1]))
+    for x in collections:
+        print(getData(collections[x]))
+        x+=1
 
 
     
