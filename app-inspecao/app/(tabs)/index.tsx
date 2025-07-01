@@ -1,42 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import { auth } from '../../config/firebase-config';
 
-export default function Login() {
+export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    onAuthStateChanged(auth, user => {
-      if (user) router.replace('/survey');
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) router.replace('/(tabs)/survey');
     });
+    return () => unsubscribe();
   }, []);
 
   const login = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, senha);
-      router.replace('/survey');
-    } catch (error) {
-      Alert.alert('Erro', 'Credenciais inválidas');
+    } catch (error: any) {
+      Alert.alert('Erro ao fazer login', error.message);
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      <TextInput placeholder="Email" onChangeText={setEmail} style={styles.input} />
-      <TextInput placeholder="Senha" secureTextEntry onChangeText={setSenha} style={styles.input} />
+      <TextInput style={styles.input} placeholder="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" />
+      <TextInput style={styles.input} placeholder="Senha" value={senha} onChangeText={setSenha} secureTextEntry />
       <Button title="Entrar" onPress={login} />
     </View>
   );
 }
-const userAgent=navigator.userAgent
-console.log (userAgent)
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black', justifyContent: 'center', padding: 20 },
-  title: { color: 'yellow', fontSize: 24, marginBottom: 20 },
-  input: { backgroundColor: 'white', padding: 10, marginBottom: 10, borderRadius: 5 },
+  container: { flex: 1, justifyContent: 'center', padding: 20 },
+  title: { fontSize: 24, marginBottom: 20 },
+  input: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 8, marginBottom: 15 },
 });

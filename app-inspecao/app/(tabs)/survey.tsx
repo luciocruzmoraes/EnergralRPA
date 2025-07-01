@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Alert,
   ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { auth, db } from '../../config/firebase-config';
-import { collection, addDoc } from 'firebase/firestore';
-
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 const checklistItems = [
   'Soluta adipisci odit aut.',
@@ -28,15 +27,67 @@ const criterios = [
   'Sem danos visíveis',
 ];
 
+const statusOptions = [
+  'Inativos',
+  'Operacional',
+  'Com falha',
+  'Em manutenção',
+];
+
 export default function Inspecao() {
   const [equipamento, setEquipamento] = useState('');
   const [localizacao, setLocalizacao] = useState('');
   const [status, setStatus] = useState('');
   const [respostas, setRespostas] = useState(Array(5).fill(''));
 
+  const [equipamentosLista, setEquipamentosLista] = useState<string[]>([]);
+  const [subestacoesLista, setSubestacoesLista] = useState<string[]>([]);
+
+  // Carregar equipamentos com getDocs
+  const carregarEquipamentos = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'equipamentos'));
+      const lista: string[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return data.nome || ''; 
+      }).filter(nome => nome !== '');
+      setEquipamentosLista(lista);
+    } catch (error) {
+      console.error('Erro ao carregar equipamentos:', error);
+      Alert.alert('Erro', 'Falha ao carregar equipamentos');
+    }
+  };
+
+  const carregarSubestacoes = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'subestacoes'));
+      const lista: string[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return data.nome || '';
+      }).filter(nome => nome !== '');
+      setSubestacoesLista(lista);
+    } catch (error) {
+      console.error('Erro ao carregar subestações:', error);
+      Alert.alert('Erro', 'Falha ao carregar subestações');
+    }
+  };
+
+  useEffect(() => {
+    carregarEquipamentos();
+    carregarSubestacoes();
+  }, []);
+
   const salvarInspecao = async () => {
     const user = auth.currentUser;
     if (!user) return Alert.alert('Erro', 'Usuário não autenticado');
+
+    if (!equipamento || !localizacao || !status) {
+      return Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
+    }
+
+    if (respostas.some((r) => r === '')) {
+      return Alert.alert('Erro', 'Responda todos os itens do checklist');
+    }
 
     const inspecao = {
       usuario: user.email,
@@ -56,7 +107,6 @@ export default function Inspecao() {
       const lista = antigas ? JSON.parse(antigas) : [];
       lista.push(inspecao);
       await AsyncStorage.setItem('inspecoes', JSON.stringify(lista));
-
       await addDoc(collection(db, 'inspecoes'), inspecao);
 
       Alert.alert('Sucesso', 'Inspeção salva localmente e no Firebase!');
@@ -78,24 +128,53 @@ export default function Inspecao() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Formulário de Inspeção</Text>
 
-      <TextInput
-        placeholder="Equipamento"
-        value={equipamento}
-        onChangeText={setEquipamento}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Localização"
-        value={localizacao}
-        onChangeText={setLocalizacao}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Status"
-        value={status}
-        onChangeText={setStatus}
-        style={styles.input}
-      />
+      <View style={styles.dropdownContainer}>
+        <Picker
+          selectedValue={equipamento}
+          onValueChange={setEquipamento}
+          style={styles.picker}
+          itemStyle={styles.pickerItem}
+        >
+          <Picker.Item label="Selecione o equipamento..." value="" />
+          {equipamentosLista.length === 0 && (
+            <Picker.Item label="Carregando..." value="" enabled={false} />
+          )}
+          {equipamentosLista.map((eq, i) => (
+            <Picker.Item key={i} label={eq} value={eq} />
+          ))}
+        </Picker>
+      </View>
+
+      <View style={styles.dropdownContainer}>
+        <Picker
+          selectedValue={localizacao}
+          onValueChange={setLocalizacao}
+          style={styles.picker}
+          itemStyle={styles.pickerItem}
+        >
+          <Picker.Item label="Selecione a localização..." value="" />
+          {subestacoesLista.length === 0 && (
+            <Picker.Item label="Carregando..." value="" enabled={false} />
+          )}
+          {subestacoesLista.map((loc, i) => (
+            <Picker.Item key={i} label={loc} value={loc} />
+          ))}
+        </Picker>
+      </View>
+
+      <View style={styles.dropdownContainer}>
+        <Picker
+          selectedValue={status}
+          onValueChange={setStatus}
+          style={styles.picker}
+          itemStyle={styles.pickerItem}
+        >
+          <Picker.Item label="Selecione o status..." value="" />
+          {['Inativos', 'Operacional', 'Com falha', 'Em manutenção'].map((statusItem, i) => (
+            <Picker.Item key={i} label={statusItem} value={statusItem} />
+          ))}
+        </Picker>
+      </View>
 
       {checklistItems.map((item, index) => (
         <View key={index} style={styles.dropdownContainer}>
@@ -103,6 +182,7 @@ export default function Inspecao() {
           <Picker
             selectedValue={respostas[index]}
             style={styles.picker}
+            itemStyle={styles.pickerItem}
             onValueChange={(valor) => {
               const nova = [...respostas];
               nova[index] = valor;
@@ -117,29 +197,51 @@ export default function Inspecao() {
         </View>
       ))}
 
-      <Button title="Salvar Inspeção" onPress={salvarInspecao} />
+      <TouchableOpacity style={styles.button} onPress={salvarInspecao}>
+        <Text style={styles.buttonText}>SALVAR INSPEÇÃO</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'black', padding: 20 },
-  title: { color: 'yellow', fontSize: 22, marginBottom: 20 },
-  input: {
-    backgroundColor: 'white',
-    marginBottom: 10,
-    borderRadius: 5,
-    padding: 10,
+  title: {
+    color: 'yellow',
+    fontSize: 22,
+    marginBottom: 20,
+    fontWeight: 'bold',
+    fontFamily: Platform.OS === 'android' ? 'Roboto' : 'System',
+    textAlign: 'center',
   },
   dropdownContainer: {
-    marginBottom: 15,
-    backgroundColor: '#1c1c1c',
-    borderRadius: 5,
-    padding: 10,
+    marginBottom: 10,
   },
-  label: { color: 'white', marginBottom: 5 },
+  label: {
+    color: 'white',
+    marginBottom: 8,
+    fontSize: 15,
+  },
   picker: {
     backgroundColor: 'white',
+    height: 50,
     borderRadius: 5,
+    width: '100%',
+  },
+  pickerItem: {
+    fontSize: 16,
+    height: 50,
+  },
+  button: {
+    backgroundColor: '#339CFF',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
