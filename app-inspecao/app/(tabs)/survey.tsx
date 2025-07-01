@@ -13,6 +13,7 @@ import { Picker } from '@react-native-picker/picker';
 import { auth, db } from '../../config/firebase-config';
 import { collection, addDoc } from 'firebase/firestore';
 
+
 const checklistItems = [
   'Soluta adipisci odit aut.',
   'Asperiores perspiciatis numquam quibusdam atque.',
@@ -51,13 +52,11 @@ export default function Inspecao() {
     };
 
     try {
-      // 🔒 Salva localmente
       const antigas = await AsyncStorage.getItem('inspecoes');
       const lista = antigas ? JSON.parse(antigas) : [];
       lista.push(inspecao);
       await AsyncStorage.setItem('inspecoes', JSON.stringify(lista));
 
-      // ☁️ Salva no Firestore
       await addDoc(collection(db, 'inspecoes'), inspecao);
 
       Alert.alert('Sucesso', 'Inspeção salva localmente e no Firebase!');

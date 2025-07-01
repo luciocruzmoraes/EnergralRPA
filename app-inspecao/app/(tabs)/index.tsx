@@ -11,14 +11,14 @@ export default function Login() {
 
   useEffect(() => {
     onAuthStateChanged(auth, user => {
-      if (user) router.replace('/inspecoes');
+      if (user) router.replace('/survey');
     });
   }, []);
 
   const login = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, senha);
-      router.replace('/inspecoes');
+      router.replace('/survey');
     } catch (error) {
       Alert.alert('Erro', 'Credenciais inválidas');
     }
@@ -33,7 +33,8 @@ export default function Login() {
     </View>
   );
 }
-
+const userAgent=navigator.userAgent
+console.log (userAgent)
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'black', justifyContent: 'center', padding: 20 },
   title: { color: 'yellow', fontSize: 24, marginBottom: 20 },

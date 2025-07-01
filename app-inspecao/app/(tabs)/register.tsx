@@ -8,28 +8,29 @@ import {
   StyleSheet,
   Switch,
 } from 'react-native';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase-config';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-export default function Register() {
+export default function CadastroUsuario() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [nome, setNome] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [dtAdmissao, setDtAdmissao] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
 
   const criarUsuario = async () => {
-    const userAtual = auth.currentUser;
-    if (!userAtual) return Alert.alert('Erro', 'Usuário não autenticado');
-
-    // Verifica se o usuário logado é admin
-    const docSnap = await getDoc(doc(db, 'users', userAtual.uid));
-    if (!docSnap.exists() || docSnap.data().role !== 'admin') {
-      return Alert.alert('Erro', 'Apenas admins podem cadastrar usuários');
-    }
-
     try {
-      const apiKey = 'AIzaSyCGjNUNIE_9SD1-40znBb2-byHlp95DfxQ'; // 🔑 sua chave Web API do Firebase
+      const userAtual = auth.currentUser;
+      if (!userAtual) throw new Error('Usuário não autenticado');
 
-      // Cria usuário pela API REST do Firebase Auth
+      const docSnap = await getDoc(doc(db, 'users', userAtual.uid));
+      if (!docSnap.exists() || docSnap.data().role !== 'admin') {
+        throw new Error('Apenas admins podem cadastrar usuários');
+      }
+
+      const apiKey = 'AIzaSyCGjNUNIE_9SD1-40znBb2-byHlp95DfxQ';
+
       const response = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
         {
@@ -45,22 +46,25 @@ export default function Register() {
 
       const data = await response.json();
 
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
+      if (data.error) throw new Error(data.error.message);
 
-      // Salva papel (role) no Firestore
       await setDoc(doc(db, 'users', data.localId), {
         email,
+        nome,
+        cpf,
+        dtAdmissao: new Date(dtAdmissao),
         role: isAdmin ? 'admin' : 'user',
       });
 
       Alert.alert('Sucesso', `Usuário criado como ${isAdmin ? 'admin' : 'user'}`);
       setEmail('');
       setSenha('');
+      setNome('');
+      setCpf('');
+      setDtAdmissao('');
       setIsAdmin(false);
     } catch (error: any) {
-      Alert.alert('Erro ao criar usuário', error.message);
+      Alert.alert('Erro', error.message || 'Erro ao criar usuário');
     }
   };
 
@@ -69,19 +73,37 @@ export default function Register() {
       <Text style={styles.title}>Cadastro de Usuário</Text>
 
       <TextInput
+        placeholder="Nome"
+        value={nome}
+        onChangeText={setNome}
+        style={styles.input}
+      />
+      <TextInput
+        placeholder="CPF"
+        value={cpf}
+        onChangeText={setCpf}
+        style={styles.input}
+      />
+      <TextInput
+        placeholder="Data de admissão (AAAA-MM-DD)"
+        value={dtAdmissao}
+        onChangeText={setDtAdmissao}
+        style={styles.input}
+      />
+      <TextInput
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         style={styles.input}
-        autoCapitalize="none"
         keyboardType="email-address"
+        autoCapitalize="none"
       />
       <TextInput
         placeholder="Senha"
         value={senha}
-        secureTextEntry
         onChangeText={setSenha}
         style={styles.input}
+        secureTextEntry
       />
 
       <View style={styles.switchContainer}>
@@ -95,18 +117,8 @@ export default function Register() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'black',
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    color: 'yellow',
-    fontSize: 20,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
+  container: { flex: 1, backgroundColor: 'black', padding: 20, justifyContent: 'center' },
+  title: { color: 'yellow', fontSize: 22, marginBottom: 20, textAlign: 'center' },
   input: {
     backgroundColor: 'white',
     padding: 10,
