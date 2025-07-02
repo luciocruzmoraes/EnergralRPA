@@ -1,0 +1,1 @@
+2025-07-02 10:54:26,691 - INFO - Conection to Firebase and its collections [DB]
