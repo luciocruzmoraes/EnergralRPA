@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// IMPORTS
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,12 +8,17 @@ import {
   TouchableOpacity,
   Platform,
   Alert,
+  Dimensions,
+  TextInput,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
+import NetInfo from '@react-native-community/netinfo';
 import { auth, db } from '../../config/firebase-config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
 
+// DADOS ESTÁTICOS
 const checklistItems = [
   'Soluta adipisci odit aut.',
   'Asperiores perspiciatis numquam quibusdam atque.',
@@ -21,227 +27,347 @@ const checklistItems = [
   'Dolor inventore facere debitis eligendi.',
 ];
 
-const criterios = [
-  'Sinal estável',
-  'Dentro dos parâmetros',
-  'Sem danos visíveis',
-];
+const criterios = ['Sinal estável', 'Dentro dos parâmetros', 'Sem danos visíveis'];
+const statusOptions = ['Inativos', 'Operacional', 'Com falha', 'Em manutenção'];
 
-const statusOptions = [
-  'Inativos',
-  'Operacional',
-  'Com falha',
-  'Em manutenção',
-];
+type Equip = { nome: string; localizacao: string };
 
+// CHAVES
+const KEY_SUBS = 'cache_subestacoes';
+const KEY_EQUIP = 'cache_equipamentos';
+const KEY_PEND = 'inspecoesPendentes';
+const KEY_FORM = 'form_inspecao_cache';
+
+// COMPONENTE PRINCIPAL
 export default function Inspecao() {
-  const [equipamento, setEquipamento] = useState('');
+  const router = useRouter();
+
+  // FORMULÁRIO
   const [localizacao, setLocalizacao] = useState('');
+  const [equipamento, setEquipamento] = useState('');
   const [status, setStatus] = useState('');
-  const [respostas, setRespostas] = useState(Array(5).fill(''));
+  const [respostas, setRespostas] = useState(Array(checklistItems.length).fill(''));
+  const [observacao, setObservacao] = useState('');
 
-  const [equipamentosLista, setEquipamentosLista] = useState<string[]>([]);
-  const [subestacoesLista, setSubestacoesLista] = useState<string[]>([]);
+  // DADOS
+  const [subestacoes, setSubestacoes] = useState<string[]>([]);
+  const [equipamentos, setEquipamentos] = useState<Equip[]>([]);
+  const [equipamentosFiltrados, setFiltrados] = useState<string[]>([]);
 
-  // Carregar equipamentos com getDocs
-  const carregarEquipamentos = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, 'equipamentos'));
-      const lista: string[] = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return data.nome || ''; 
-      }).filter(nome => nome !== '');
-      setEquipamentosLista(lista);
-    } catch (error) {
-      console.error('Erro ao carregar equipamentos:', error);
-      Alert.alert('Erro', 'Falha ao carregar equipamentos');
-    }
-  };
+  // ESTADO DE SUCESSO
+  const [salvoComSucesso, setSalvoComSucesso] = useState(false);
+  const [mensagemSucesso, setMensagemSucesso] = useState('');
 
-  const carregarSubestacoes = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, 'subestacoes'));
-      const lista: string[] = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return data.nome || '';
-      }).filter(nome => nome !== '');
-      setSubestacoesLista(lista);
-    } catch (error) {
-      console.error('Erro ao carregar subestações:', error);
-      Alert.alert('Erro', 'Falha ao carregar subestações');
-    }
-  };
-
+  // CARREGAR DADOS E SYNC
   useEffect(() => {
-    carregarEquipamentos();
-    carregarSubestacoes();
+    (async () => {
+      const online = (await NetInfo.fetch()).isConnected ?? false;
+      await Promise.all([loadSubestacoes(online), loadEquipamentos(online)]);
+      if (online) syncPendentes();
+      await carregarFormLocal();
+    })();
   }, []);
 
-  const salvarInspecao = async () => {
+  useEffect(() => {
+    setEquipamento('');
+    const filtrados = equipamentos
+      .filter(eq => eq.localizacao === localizacao)
+      .map(eq => eq.nome);
+    setFiltrados(filtrados);
+  }, [localizacao, equipamentos]);
+
+  const loadSubestacoes = async (online: boolean) => {
+    try {
+      const cached = await AsyncStorage.getItem(KEY_SUBS);
+      if (cached) setSubestacoes(JSON.parse(cached));
+    } catch {}
+    if (!online) return;
+    try {
+      const snap = await getDocs(collection(db, 'subestacoes'));
+      const lista = snap.docs.map(d => d.data().nome || '').filter(Boolean);
+      setSubestacoes(lista);
+      await AsyncStorage.setItem(KEY_SUBS, JSON.stringify(lista));
+    } catch (e) {
+      console.error('Subestações FS:', e);
+    }
+  };
+
+  const loadEquipamentos = async (online: boolean) => {
+    try {
+      const cached = await AsyncStorage.getItem(KEY_EQUIP);
+      if (cached) setEquipamentos(JSON.parse(cached));
+    } catch {}
+    if (!online) return;
+    try {
+      const snap = await getDocs(collection(db, 'equipamentos'));
+      const lista = snap.docs
+        .map(d => {
+          const dt = d.data();
+          return { nome: dt.nome || '', localizacao: dt.localizacao || '' };
+        })
+        .filter(e => e.nome && e.localizacao);
+      setEquipamentos(lista);
+      await AsyncStorage.setItem(KEY_EQUIP, JSON.stringify(lista));
+    } catch (e) {
+      console.error('Equipamentos FS:', e);
+    }
+  };
+
+  const syncPendentes = useCallback(async () => {
+    try {
+      const str = await AsyncStorage.getItem(KEY_PEND);
+      if (!str) return;
+      const pend = JSON.parse(str);
+      for (const item of pend) {
+        await addDoc(collection(db, 'inspecoes'), item);
+      }
+      await AsyncStorage.removeItem(KEY_PEND);
+      Alert.alert('Sincronizado', 'Inspeções pendentes enviadas com sucesso!');
+    } catch (e) {
+      console.error('Sync:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const dados = { localizacao, equipamento, status, respostas, observacao };
+    AsyncStorage.setItem(KEY_FORM, JSON.stringify(dados)).catch(e => {
+      console.error('Erro ao salvar form local:', e);
+    });
+  }, [localizacao, equipamento, status, respostas, observacao]);
+
+  const carregarFormLocal = async () => {
+    try {
+      const json = await AsyncStorage.getItem(KEY_FORM);
+      if (json) {
+        const dados = JSON.parse(json);
+        if (dados.localizacao) setLocalizacao(dados.localizacao);
+        if (dados.equipamento) setEquipamento(dados.equipamento);
+        if (dados.status) setStatus(dados.status);
+        if (dados.respostas && Array.isArray(dados.respostas))
+          setRespostas(dados.respostas);
+        if (dados.observacao) setObservacao(dados.observacao);
+      }
+    } catch (e) {
+      console.error('Erro ao carregar form local:', e);
+    }
+  };
+
+  const salvar = async () => {
     const user = auth.currentUser;
-    if (!user) return Alert.alert('Erro', 'Usuário não autenticado');
-
-    if (!equipamento || !localizacao || !status) {
-      return Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
+    if (!user) {
+      Alert.alert('Erro', 'Usuário não autenticado');
+      return;
     }
 
-    if (respostas.some((r) => r === '')) {
-      return Alert.alert('Erro', 'Responda todos os itens do checklist');
+    if (!localizacao || !equipamento || !status) {
+      Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
+      return;
     }
 
-    const inspecao = {
-      usuario: user.email,
+    if (respostas.some(r => !r)) {
+      Alert.alert('Erro', 'Responda todos os itens do checklist');
+      return;
+    }
+
+    const dados = {
       uid: user.uid,
+      usuario: user.email,
       equipamento,
       localizacao,
       status,
-      checklist: checklistItems.map((item, i) => ({
-        item,
-        resposta: respostas[i],
-      })),
+      checklist: checklistItems.map((item, i) => ({ item, resposta: respostas[i] })),
+      observacao,
       data: new Date().toISOString(),
     };
 
+    const online = (await NetInfo.fetch()).isConnected ?? false;
     try {
-      const antigas = await AsyncStorage.getItem('inspecoes');
-      const lista = antigas ? JSON.parse(antigas) : [];
-      lista.push(inspecao);
-      await AsyncStorage.setItem('inspecoes', JSON.stringify(lista));
-      await addDoc(collection(db, 'inspecoes'), inspecao);
-
-      Alert.alert('Sucesso', 'Inspeção salva localmente e no Firebase!');
-      limparFormulario();
+      if (online) {
+        await addDoc(collection(db, 'inspecoes'), dados);
+        setMensagemSucesso('Inspeção registrada com sucesso!');
+        await AsyncStorage.removeItem(KEY_FORM);
+      } else {
+        const prev = JSON.parse((await AsyncStorage.getItem(KEY_PEND)) || '[]');
+        prev.push(dados);
+        await AsyncStorage.setItem(KEY_PEND, JSON.stringify(prev));
+        setMensagemSucesso('Inspeção salva localmente e será sincronizada.');
+      }
+      limpar();
+      setSalvoComSucesso(true);
     } catch (e) {
-      console.error(e);
-      Alert.alert('Erro', 'Falha ao salvar a inspeção');
+      console.error('Erro ao salvar inspeção:', e);
+      Alert.alert('Erro', 'Falha ao salvar inspeção');
     }
   };
 
-  const limparFormulario = () => {
-    setEquipamento('');
+  const limpar = () => {
     setLocalizacao('');
+    setEquipamento('');
     setStatus('');
-    setRespostas(Array(5).fill(''));
+    setRespostas(Array(checklistItems.length).fill(''));
+    setObservacao('');
   };
 
+  const logout = async () => {
+    try {
+      await auth.signOut();
+      router.replace('/');
+    } catch {
+      Alert.alert('Erro', 'Não foi possível sair.');
+    }
+  };
+
+  // SUCESSO
+  if (salvoComSucesso) {
+    return (
+      <View style={[styles.container, styles.successContainer]}>
+        <Text style={styles.successIcon}>✅</Text>
+        <Text style={styles.successText}>{mensagemSucesso}</Text>
+        <TouchableOpacity style={styles.btn} onPress={() => setSalvoComSucesso(false)}>
+          <Text style={styles.btnTxt}>Nova Inspeção</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // FORMULÁRIO
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Formulário de Inspeção</Text>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+            <Text style={styles.logoutTxt}>Sair</Text>
+          </TouchableOpacity>
 
-      <View style={styles.dropdownContainer}>
-        <Picker
-          selectedValue={equipamento}
-          onValueChange={setEquipamento}
-          style={styles.picker}
-          itemStyle={styles.pickerItem}
-        >
-          <Picker.Item label="Selecione o equipamento..." value="" />
-          {equipamentosLista.length === 0 && (
-            <Picker.Item label="Carregando..." value="" enabled={false} />
-          )}
-          {equipamentosLista.map((eq, i) => (
-            <Picker.Item key={i} label={eq} value={eq} />
+          <Text style={styles.heading}>Formulário de Inspeção</Text>
+
+          <View style={styles.field}>
+            <Picker selectedValue={localizacao} onValueChange={setLocalizacao} style={styles.picker}>
+              <Picker.Item label="Selecione a subestação..." value="" />
+              {subestacoes.map((s, i) => <Picker.Item key={i} label={s} value={s} />)}
+            </Picker>
+          </View>
+
+          <View style={styles.field}>
+            <Picker enabled={!!localizacao} selectedValue={equipamento} onValueChange={setEquipamento} style={styles.picker}>
+              <Picker.Item label={localizacao ? 'Selecione o equipamento...' : 'Escolha a subestação primeiro...'} value="" />
+              {equipamentosFiltrados.map((e, i) => <Picker.Item key={i} label={e} value={e} />)}
+            </Picker>
+          </View>
+
+          <View style={styles.field}>
+            <Picker selectedValue={status} onValueChange={setStatus} style={styles.picker}>
+              <Picker.Item label="Selecione o status..." value="" />
+              {statusOptions.map((s, i) => <Picker.Item key={i} label={s} value={s} />)}
+            </Picker>
+          </View>
+
+          {checklistItems.map((item, idx) => (
+            <View key={idx} style={styles.field}>
+              <Text style={styles.label}>{item}</Text>
+              <Picker selectedValue={respostas[idx]} onValueChange={v => {
+                const arr = [...respostas];
+                arr[idx] = v;
+                setRespostas(arr);
+              }} style={styles.picker}>
+                <Picker.Item label="Selecione..." value="" />
+                {criterios.map((c, i) => <Picker.Item key={i} label={c} value={c} />)}
+              </Picker>
+            </View>
           ))}
-        </Picker>
-      </View>
 
-      <View style={styles.dropdownContainer}>
-        <Picker
-          selectedValue={localizacao}
-          onValueChange={setLocalizacao}
-          style={styles.picker}
-          itemStyle={styles.pickerItem}
-        >
-          <Picker.Item label="Selecione a localização..." value="" />
-          {subestacoesLista.length === 0 && (
-            <Picker.Item label="Carregando..." value="" enabled={false} />
-          )}
-          {subestacoesLista.map((loc, i) => (
-            <Picker.Item key={i} label={loc} value={loc} />
-          ))}
-        </Picker>
-      </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>Observação</Text>
+            <TextInput
+              style={[styles.picker, styles.textArea]}
+              placeholder="Digite observações adicionais..."
+              value={observacao}
+              onChangeText={setObservacao}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              placeholderTextColor="#bbb"
+            />
+          </View>
 
-      <View style={styles.dropdownContainer}>
-        <Picker
-          selectedValue={status}
-          onValueChange={setStatus}
-          style={styles.picker}
-          itemStyle={styles.pickerItem}
-        >
-          <Picker.Item label="Selecione o status..." value="" />
-          {['Inativos', 'Operacional', 'Com falha', 'Em manutenção'].map((statusItem, i) => (
-            <Picker.Item key={i} label={statusItem} value={statusItem} />
-          ))}
-        </Picker>
-      </View>
-
-      {checklistItems.map((item, index) => (
-        <View key={index} style={styles.dropdownContainer}>
-          <Text style={styles.label}>{item}</Text>
-          <Picker
-            selectedValue={respostas[index]}
-            style={styles.picker}
-            itemStyle={styles.pickerItem}
-            onValueChange={(valor) => {
-              const nova = [...respostas];
-              nova[index] = valor;
-              setRespostas(nova);
-            }}
-          >
-            <Picker.Item label="Selecione..." value="" />
-            {criterios.map((criterio, i) => (
-              <Picker.Item key={i} label={criterio} value={criterio} />
-            ))}
-          </Picker>
+          <TouchableOpacity style={styles.btn} onPress={salvar}>
+            <Text style={styles.btnTxt}>SALVAR INSPEÇÃO</Text>
+          </TouchableOpacity>
         </View>
-      ))}
-
-      <TouchableOpacity style={styles.button} onPress={salvarInspecao}>
-        <Text style={styles.buttonText}>SALVAR INSPEÇÃO</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
+// ESTILOS
+const { width } = Dimensions.get('window');
+const CARD_MAX = 480;
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black', padding: 20 },
-  title: {
-    color: 'yellow',
-    fontSize: 22,
-    marginBottom: 20,
-    fontWeight: 'bold',
-    fontFamily: Platform.OS === 'android' ? 'Roboto' : 'System',
-    textAlign: 'center',
+  container: { flex: 1, backgroundColor: '#000' },
+  scroll: { padding: 20, alignItems: 'center', paddingBottom: 80 },
+  card: {
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? CARD_MAX : '100%',
+    backgroundColor: '#333',
+    borderRadius: 12,
+    padding: 20,
   },
-  dropdownContainer: {
+  logoutBtn: {
+    alignSelf: 'flex-end',
+    padding: 8,
+    backgroundColor: '#555',
+    borderRadius: 6,
     marginBottom: 10,
   },
-  label: {
-    color: 'white',
-    marginBottom: 8,
-    fontSize: 15,
+  logoutTxt: { color: '#fff', fontWeight: 'bold' },
+  heading: {
+    fontSize: 24,
+    color: 'yellow',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
   },
+  field: { marginBottom: 15 },
+  label: { color: '#fff', marginBottom: 6, fontSize: 14 },
   picker: {
-    backgroundColor: 'white',
+    backgroundColor: '#444',
+    color: '#fff',
     height: 50,
-    borderRadius: 5,
-    width: '100%',
-  },
-  pickerItem: {
-    fontSize: 16,
-    height: 50,
-  },
-  button: {
-    backgroundColor: '#339CFF',
-    padding: 15,
     borderRadius: 8,
+  },
+  textArea: {
+    height: 100,
+    paddingHorizontal: 10,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+    backgroundColor: '#444',
+    borderRadius: 8,
+    color: '#fff',
+  },
+  btn: {
+    backgroundColor: '#007aff',
+    borderRadius: 8,
+    padding: 15,
     marginTop: 20,
     alignItems: 'center',
   },
-  buttonText: {
-    color: 'white',
+  btnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+
+  // Sucesso
+  successContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  successText: {
+    color: '#0f0',
+    fontSize: 18,
     fontWeight: 'bold',
-    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  successIcon: {
+    fontSize: 64,
+    color: '#0f0',
   },
 });

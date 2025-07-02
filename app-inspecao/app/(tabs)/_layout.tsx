@@ -1,4 +1,3 @@
-// app/(tabs)/_layout.tsx
 import { Tabs, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Platform, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
@@ -11,17 +10,17 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-export default function TabLayout() {
+export default function TabsLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const isAdmin = useAdmin(false);
+  const isAdmin = useAdmin(); // Hook para verificar se o usuário é administrador
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
-      if (!user) router.replace('/auth/login');
+      if (!user) router.replace('/auth/login'); // Redireciona para o login caso o usuário não esteja autenticado
       setIsLoading(false);
     });
     return unsubscribe;
@@ -30,7 +29,7 @@ export default function TabLayout() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.replace('/auth/login');
+      router.replace('/auth/login'); // Redireciona para o login após o logout
     } catch (error) {
       console.error('Erro ao sair:', error);
     }
@@ -76,6 +75,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <IconSymbol name="checkmark.circle" size={28} color={color} />,
           }}
         />
+        {/* Renderiza as abas de admin apenas se o usuário for admin */}
         {isAdmin && (
           <>
             <Tabs.Screen
@@ -108,20 +108,23 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   logoutContainer: {
-    paddingTop: 40,
+    position: 'absolute',  // Define a posição do botão de logout
+    top: 40,               // Distância do topo
+    right: 10,             // Distância da borda direita
     paddingBottom: 10,
     alignItems: 'center',
     backgroundColor: '#007aff',
   },
   logoutButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: 10,  // Diminuímos o padding horizontal
+    paddingVertical: 4,     // Diminuímos o padding vertical
     backgroundColor: '#fff',
     borderRadius: 20,
   },
   logoutText: {
     color: '#007aff',
     fontWeight: 'bold',
+    fontSize: 12,  // Diminuímos ainda mais o tamanho da fonte
   },
   center: {
     flex: 1,

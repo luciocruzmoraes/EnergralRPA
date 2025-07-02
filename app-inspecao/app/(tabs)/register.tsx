@@ -3,13 +3,15 @@ import {
   View,
   Text,
   TextInput,
-  Button,
+  TouchableOpacity,
   Alert,
   StyleSheet,
   Switch,
+  Platform,
 } from 'react-native';
 import { auth, db } from '../../config/firebase-config';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
 
 export default function CadastroUsuario() {
   const [email, setEmail] = useState('');
@@ -18,6 +20,7 @@ export default function CadastroUsuario() {
   const [cpf, setCpf] = useState('');
   const [dtAdmissao, setDtAdmissao] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const router = useRouter();
 
   const criarUsuario = async () => {
     try {
@@ -45,7 +48,6 @@ export default function CadastroUsuario() {
       );
 
       const data = await response.json();
-
       if (data.error) throw new Error(data.error.message);
 
       await setDoc(doc(db, 'users', data.localId), {
@@ -68,70 +70,150 @@ export default function CadastroUsuario() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      router.replace('/'); // Altere para a rota de login se necessário
+    } catch (e) {
+      Alert.alert('Erro ao sair', 'Não foi possível desconectar.');
+      console.error(e);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cadastro de Usuário</Text>
+      <View style={styles.form}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Sair</Text>
+        </TouchableOpacity>
 
-      <TextInput
-        placeholder="Nome"
-        value={nome}
-        onChangeText={setNome}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="CPF"
-        value={cpf}
-        onChangeText={setCpf}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Data de admissão (AAAA-MM-DD)"
-        value={dtAdmissao}
-        onChangeText={setDtAdmissao}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        placeholder="Senha"
-        value={senha}
-        onChangeText={setSenha}
-        style={styles.input}
-        secureTextEntry
-      />
+        <Text style={styles.title}>Cadastro de Usuário</Text>
 
-      <View style={styles.switchContainer}>
-        <Text style={styles.label}>Criar como admin?</Text>
-        <Switch value={isAdmin} onValueChange={setIsAdmin} />
+        <TextInput
+          placeholder="Nome"
+          value={nome}
+          onChangeText={setNome}
+          style={styles.input}
+          placeholderTextColor="#aaa"
+        />
+        <TextInput
+          placeholder="CPF"
+          value={cpf}
+          onChangeText={setCpf}
+          style={styles.input}
+          placeholderTextColor="#aaa"
+        />
+        <TextInput
+          placeholder="Data de admissão (AAAA-MM-DD)"
+          value={dtAdmissao}
+          onChangeText={setDtAdmissao}
+          style={styles.input}
+          placeholderTextColor="#aaa"
+        />
+        <TextInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          placeholderTextColor="#aaa"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          placeholder="Senha"
+          value={senha}
+          onChangeText={setSenha}
+          style={styles.input}
+          placeholderTextColor="#aaa"
+          secureTextEntry
+        />
+
+        <View style={styles.switchContainer}>
+          <Text style={styles.label}>Criar como admin?</Text>
+          <Switch value={isAdmin} onValueChange={setIsAdmin} />
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={criarUsuario}>
+          <Text style={styles.buttonText}>Cadastrar</Text>
+        </TouchableOpacity>
       </View>
-
-      <Button title="Cadastrar" onPress={criarUsuario} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'black', padding: 20, justifyContent: 'center' },
-  title: { color: 'yellow', fontSize: 22, marginBottom: 20, textAlign: 'center' },
-  input: {
-    backgroundColor: 'white',
-    padding: 10,
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  form: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#333',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  logoutButton: {
+    alignSelf: 'flex-end',
     marginBottom: 10,
-    borderRadius: 5,
+    padding: 8,
+    backgroundColor: '#555',
+    borderRadius: 6,
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  title: {
+    color: 'yellow',
+    fontSize: 24,
+    marginBottom: 20,
+    fontWeight: 'bold',
+    fontFamily: Platform.OS === 'android' ? 'Roboto' : 'System',
+    textAlign: 'center',
+  },
+  input: {
+    width: '100%',
+    padding: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    color: 'white',
+    backgroundColor: '#444',
   },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
+    alignSelf: 'flex-start',
   },
   label: {
     color: 'white',
+    fontSize: 16,
     marginRight: 10,
+  },
+  button: {
+    padding: 15,
+    backgroundColor: '#007aff',
+    borderRadius: 8,
+    marginTop: 20,
+    width: '100%',
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

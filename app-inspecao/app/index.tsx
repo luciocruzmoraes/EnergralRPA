@@ -10,11 +10,13 @@ export default function IndexScreen() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.replace('/(tabs)/survey');
+      } else {
+        router.replace('/auth/login');
       }
     });
 
     return () => unsubscribe();
   }, [router]);
 
-  return null; 
+  return null;
 }
