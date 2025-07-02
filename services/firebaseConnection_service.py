@@ -2,18 +2,27 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from controllers.log_controller import log
 
-def connectionToFirebase():
-    #Intialize with the API key [JSON File] generated inside the Firebase Database
-    log.info("firebaseConnection_service: Connecting to Firebase and its collections [DB]")
-    credential = credentials.Certificate("config/serviceAccountKey.json")
-
-    firebase_admin.initialize_app(credential)
-
-    #Path inside Firebase Realtime Database where the data is stored - '/' indicates that it will get everything
-    firebase_path = "/"
-
-    # Initialize Firestore client and sets the Collection Name
+def initializeFirebase():
+    #Initializes the Firebase app and returns the Firestore client.
+    global db # Declare intent to modify the global db variable
+    
+    if not firebase_admin._apps: # Only initialize if not already initialized
+        log.info("firebaseConnection_service: Initializing Firebase app.")
+        try:
+            credential = credentials.Certificate("config/serviceAccountKey.json")
+            firebase_admin.initialize_app(credential)
+            
+            log.info("firebaseConnection_service: Firebase app initialized and Firestore client created.")
+        except Exception as e:
+            log.error(f"firebaseConnection_service: Error initializing Firebase: {e}")
+            raise
     db = firestore.client()
 
-    #List of collections on Firebase
-    collections = ["inspecoes", "users", "subestacoes", "equipamentos"]
+def getDB():
+    #Returns the Firestore client that was set above [the already initialized one]
+    return db
+
+def getCollectionsList():
+    #Returns the predefined list of collections.
+    collections = ["inspecoes", "users", "subestacoes", "equipamentos"] # Define collections here
+    return collections

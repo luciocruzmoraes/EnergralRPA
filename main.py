@@ -1,9 +1,9 @@
-from services.firebaseConnection_service import connectionToFirebase
+from controllers.dataGet_controller import loopColections
 from controllers.log_controller import log
 
 #Running Main
 log.info("Running Main")
 if __name__ == "__main__":
-    #Calling connectionToFireBase function from services.firebaseConnection_service
-    log.info("Main: Calling connectionToFireBase")
-    connectionToFirebase()  
+    #Calling loopColections function from controllers.dataGet_controller
+    log.info("Main: Calling dataGet_Controller")
+    loopColections()  
