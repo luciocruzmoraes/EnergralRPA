@@ -16,7 +16,7 @@ def loopColections():
         except Exception as e:
             log.error(f"dataGet_controller: Error fetching data for collection {collectionName}: {e}")
             
-    return collectionsList
+    return data
 
 
 def getData(collectionName):
@@ -36,7 +36,8 @@ def getData(collectionName):
         record['id'] = item.id  # Include Firestore document ID to item
         print(f"record['id'] {record['id']}")
         dataDicio.append(record) # Appends items to dictionary
-        print(dataDicio)
+        print(f"\n\n\nDicio dentro dataGet = {dataDicio}\n\n\n")
 
     log.info(f"dataGet_controller: Collection '{collectionName}' yielded {itemCount} documents.")
+    
     return dataDicio
