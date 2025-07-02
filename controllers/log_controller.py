@@ -4,7 +4,7 @@ import logging
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[
-                        logging.FileHandler('app.txt') # Outputs to the file app.txt
+                        logging.FileHandler('log.txt') # Outputs to the file log.txt
                     ])
 
 
