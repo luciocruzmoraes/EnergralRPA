@@ -1,42 +1,45 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { db, auth } from '../../config/firebase-config';
-import { addDoc, collection, doc, getDoc } from 'firebase/firestore';
+import { addDoc, collection } from 'firebase/firestore';
+import { useAdmin } from '@/hooks/useAdmin';
 
-export default function CadastroSubestacao() {
-  const [nome, setNome] = useState('');
-  const [cidade, setCidade] = useState('');
-  const [estado, setEstado] = useState('');
+export default function Platform() {
+  const [name, setName] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const isAdmin = useAdmin();
 
-  const handleSalvar = async () => {
-    const user = auth.currentUser;
-    if (!user) return Alert.alert('Erro', 'Usuário não autenticado');
+  const handleAddSubstation = async () => {
+    if (isAdmin === false) return Alert.alert('Acesso negado', 'Apenas administradores podem cadastrar subestações.');
 
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (!userDoc.exists() || userDoc.data().role !== 'admin') {
-      return Alert.alert('Erro', 'Apenas admins podem cadastrar');
+    try {
+      await addDoc(collection(db, 'Platform'), { name, city, state });
+      Alert.alert('Sucesso', 'Subestação cadastrada com sucesso');
+      setName('');
+      setCity('');
+      setState('');
+    } catch (error: any) {
+      Alert.alert('Erro', error.message);
     }
-
-    await addDoc(collection(db, 'subestacoes'), { nome, cidade, estado });
-    Alert.alert('Sucesso', 'Subestação cadastrada');
-    setNome('');
-    setCidade('');
-    setEstado('');
   };
+
+  if (isAdmin === null) return <Text>Carregando...</Text>;  // Verificando o status do admin
+  if (isAdmin === false) return <Text>Acesso negado. Você não tem permissões de administrador.</Text>; // Acesso negado
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Cadastro de Subestação</Text>
-      <TextInput placeholder="Nome" value={nome} onChangeText={setNome} style={styles.input} />
-      <TextInput placeholder="Cidade" value={cidade} onChangeText={setCidade} style={styles.input} />
-      <TextInput placeholder="Estado" value={estado} onChangeText={setEstado} style={styles.input} />
-      <Button title="Salvar" onPress={handleSalvar} />
+      <TextInput style={styles.input} placeholder="Nome" value={name} onChangeText={setName} />
+      <TextInput style={styles.input} placeholder="Cidade" value={city} onChangeText={setCity} />
+      <TextInput style={styles.input} placeholder="Estado" value={state} onChangeText={setState} />
+      <Button title="Cadastrar Subestação" onPress={handleAddSubstation} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: 'black', justifyContent: 'center' },
-  title: { color: 'yellow', fontSize: 20, marginBottom: 20 },
-  input: { backgroundColor: 'white', marginBottom: 10, padding: 10, borderRadius: 5 },
+  container: { flex: 1, justifyContent: 'center', padding: 20 },
+  title: { fontSize: 24, marginBottom: 20 },
+  input: { padding: 10, marginBottom: 15, borderWidth: 1, borderColor: '#ccc', borderRadius: 5 },
 });
