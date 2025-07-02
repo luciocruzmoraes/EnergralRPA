@@ -4,8 +4,8 @@ from controllers.log_controller import log
 
 def connectionToFirebase():
     #Intialize with the API key [JSON File] generated inside the Firebase Database
-    log.info("Conection to Firebase and its collections [DB]")
-    credential = credentials.Certificate("serviceAccountKey.json")
+    log.info("firebaseConnection_service: Connecting to Firebase and its collections [DB]")
+    credential = credentials.Certificate("config/serviceAccountKey.json")
 
     firebase_admin.initialize_app(credential)
 
