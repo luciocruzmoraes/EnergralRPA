@@ -48,7 +48,7 @@ def gSheets():
             log.warning("dataProcessing_controller: No data to write to sheet")
             return
 
-
+        #print("\n\n\nDEBUG - allDataToExport:", allDataToExport)
         for collectionName, items in allDataToExport.items():
             if not items:
                 log.warning(f"dataProcessing_controller: No items in collection '{collectionName}'")
@@ -67,10 +67,22 @@ def gSheets():
             if len(existingData) == 0 or all(cell.strip() == "" for cell in existingData[0]):
                 currentSheet.append_row(headers)
 
-
+            existingID = set()
+            if existingData:
+                sheetHeaders = existingData[0]
+                if "id" in sheetHeaders:
+                    id_index = sheetHeaders.index("id")
+                    for row in existingData[1:]:
+                        if len(row) > id_index:
+                            existingID.add(row[id_index])
+                            
+                            
             #Writing data into the spreadsheet[row by row]
             log.info("dataProcessing_controller: Writing data [looping each node from json]")
             for item in items:
+                doc_id = item.get("id")
+                if doc_id in existingID:
+                    continue
                 cleanedUpItem = EvenItems(item)
                 row = [cleanedUpItem.get(key, "") for key in headers]
                 currentSheet.append_row(row)
