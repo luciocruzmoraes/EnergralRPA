@@ -128,32 +128,44 @@ export default function Devices() {
     };
 
     const online = (await NetInfo.fetch()).isConnected ?? false;
+    console.log('Estado de Conexão:', online ? 'Online' : 'Offline'); // Verificando o estado de conexão
 
     try {
+      // Verificar se o usuário é admin
       const userDoc = await getDocs(collection(db, 'users'));
       const userData = userDoc.docs.find(d => d.id === user.uid)?.data();
       const isAdmin = userData?.role === 'admin';
 
-      if (online && isAdmin) {
-        await addDoc(collection(db, 'equipamentos'), {
-          ...novoEquipamento,
-          validadoPor: user.email,
-        });
-      } else {
-        if (online) {
-          await addDoc(collection(db, 'equipamentos_pendentes'), novoEquipamento);
+      console.log('User role:', userData?.role); // Depuração para garantir que o papel do usuário está correto
+
+      if (online) {
+        if (isAdmin) {
+          console.log('Salvando equipamento na coleção "equipamentos"'); // Log para verificar se entrou aqui
+          // Se for admin e online, salva na coleção 'equipamentos'
+          await addDoc(collection(db, 'equipamentos'), {
+            ...novoEquipamento,
+            validadoPor: user.email,
+          });
         } else {
-          const prev = JSON.parse(await AsyncStorage.getItem(KEY_PEND) || '[]');
-          prev.push(novoEquipamento);
-          await AsyncStorage.setItem(KEY_PEND, JSON.stringify(prev));
+          console.log('Salvando equipamento na coleção "equipamentos_pendentes"'); // Log para verificar se entrou aqui
+          // Se não for admin, salva na coleção 'equipamentos_pendentes'
+          await addDoc(collection(db, 'equipamentos_pendentes'), novoEquipamento);
         }
+      } else {
+        console.log('Salvando equipamento no AsyncStorage devido à falta de conexão'); // Log para verificar se entrou aqui
+        // Se estiver offline, salva localmente no AsyncStorage
+        const prev = JSON.parse(await AsyncStorage.getItem(KEY_PEND) || '[]');
+        prev.push(novoEquipamento);
+        await AsyncStorage.setItem(KEY_PEND, JSON.stringify(prev));
       }
+
       setNomeNovoEquipamento('');
       Alert.alert('Sucesso', 'Equipamento cadastrado com sucesso!');
-      loadData();
+      loadData(); // Atualizar dados
+
     } catch (e) {
       console.error('Erro ao cadastrar equipamento:', e);
-      Alert.alert('Erro', 'Falha ao cadastrar equipamento.');
+      Alert.alert('Erro', `Falha ao cadastrar equipamento: ${Error || e}`);
     }
   };
 

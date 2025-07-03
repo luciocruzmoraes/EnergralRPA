@@ -18,6 +18,7 @@ export default function Platforma() {
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
+  const [mensagem, setMensagem] = useState(''); // NOVO
   const isAdmin = useAdmin();
   const router = useRouter();
 
@@ -31,21 +32,35 @@ export default function Platforma() {
   if (isAdmin === false) return null;
 
   const handleAddSubstation = async () => {
+    if (!name || !city || !state) {
+      Alert.alert('Erro', 'Preencha todos os campos!');
+      return;
+    }
+
     try {
-      await addDoc(collection(db, 'Platform'), { name, city, state });
-      Alert.alert('Sucesso', 'Subestação cadastrada com sucesso');
+      await addDoc(collection(db, 'subestacoes'), {
+        nome: name,
+        cidade: city,
+        estado: state,
+      });
+
+      Alert.alert('Sucesso', 'Subestação cadastrada com sucesso!');
+      setMensagem('Subestação cadastrada com sucesso!'); // NOVO
       setName('');
       setCity('');
       setState('');
+
+      setTimeout(() => setMensagem(''), 4000); // Oculta após 4 segundos
     } catch (error: any) {
-      Alert.alert('Erro', error.message);
+      console.error('Erro ao adicionar subestação:', error);
+      Alert.alert('Erro', error.message || 'Erro desconhecido.');
     }
   };
 
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      router.replace('/'); // Altere para a rota de login, se necessário
+      router.replace('/');
     } catch (e) {
       Alert.alert('Erro', 'Falha ao sair.');
       console.error(e);
@@ -83,6 +98,10 @@ export default function Platforma() {
           placeholderTextColor="#aaa"
         />
         <Button title="Cadastrar Subestação" onPress={handleAddSubstation} />
+
+        {mensagem ? (
+          <Text style={styles.successMessage}>{mensagem}</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -141,5 +160,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     color: 'white',
     backgroundColor: '#444',
+  },
+  successMessage: {
+    marginTop: 15,
+    color: 'lightgreen',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

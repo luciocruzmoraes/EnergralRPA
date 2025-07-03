@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
   StyleSheet,
   Switch,
   Platform,
@@ -18,9 +17,32 @@ export default function CadastroUsuario() {
   const [senha, setSenha] = useState('');
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
-  const [dtAdmissao, setDtAdmissao] = useState('');
+  const [dataAdmissao, setDataAdmissao] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mensagem, setMensagem] = useState(''); // estado para mensagem temporária
   const router = useRouter();
+
+  useEffect(() => {
+    const verificarAdmin = async () => {
+      try {
+        const userAtual = auth.currentUser;
+        if (!userAtual) {
+          setMensagem('Usuário não autenticado.');
+          return;
+        }
+
+        const docSnap = await getDoc(doc(db, 'users', userAtual.uid));
+        if (!docSnap.exists() || docSnap.data().role !== 'admin') {
+          setMensagem('Você não tem permissão para acessar esta página.');
+        }
+      } catch (err) {
+        console.error('Erro ao verificar admin:', err);
+        setMensagem('Não foi possível verificar permissões.');
+      }
+    };
+
+    verificarAdmin();
+  }, []);
 
   const criarUsuario = async () => {
     try {
@@ -54,29 +76,37 @@ export default function CadastroUsuario() {
         email,
         nome,
         cpf,
-        dtAdmissao: new Date(dtAdmissao),
+        dataadmissao: dataAdmissao,
         role: isAdmin ? 'admin' : 'user',
       });
 
-      Alert.alert('Sucesso', `Usuário criado como ${isAdmin ? 'admin' : 'user'}`);
+      setMensagem(`Usuário ${nome} cadastrado como ${isAdmin ? 'admin' : 'usuário comum'}.`);
+      
+      // Limpar campos
       setEmail('');
       setSenha('');
       setNome('');
       setCpf('');
-      setDtAdmissao('');
+      setDataAdmissao('');
       setIsAdmin(false);
+
+      // Limpar mensagem após 4 segundos
+      setTimeout(() => setMensagem(''), 4000);
+
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Erro ao criar usuário');
+      setMensagem(error.message || 'Erro ao criar usuário');
+      setTimeout(() => setMensagem(''), 4000);
     }
   };
 
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      router.replace('/'); // Altere para a rota de login se necessário
+      router.replace('/');
     } catch (e) {
-      Alert.alert('Erro ao sair', 'Não foi possível desconectar.');
+      setMensagem('Erro ao sair. Não foi possível desconectar.');
       console.error(e);
+      setTimeout(() => setMensagem(''), 4000);
     }
   };
 
@@ -105,8 +135,8 @@ export default function CadastroUsuario() {
         />
         <TextInput
           placeholder="Data de admissão (AAAA-MM-DD)"
-          value={dtAdmissao}
-          onChangeText={setDtAdmissao}
+          value={dataAdmissao}
+          onChangeText={setDataAdmissao}
           style={styles.input}
           placeholderTextColor="#aaa"
         />
@@ -136,6 +166,11 @@ export default function CadastroUsuario() {
         <TouchableOpacity style={styles.button} onPress={criarUsuario}>
           <Text style={styles.buttonText}>Cadastrar</Text>
         </TouchableOpacity>
+
+        {mensagem ? (
+          <Text style={styles.successMessage}>{mensagem}</Text>
+        ) : null}
+
       </View>
     </View>
   );
@@ -215,5 +250,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  successMessage: {
+    marginTop: 15,
+    color: 'lightgreen',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
