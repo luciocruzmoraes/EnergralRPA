@@ -29,7 +29,7 @@ def getData(collectionName):
     log.info(f"dataGet_controller: Fetching data from collection -> {collectionName}")
     
     # Get the Firestore database object 
-    db = getDB() 
+    db = getDB()    
 
     dataExtracted_Rough = db.collection(collectionName).stream()
     dataDicio = []

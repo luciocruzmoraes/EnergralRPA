@@ -3,6 +3,25 @@ from oauth2client.service_account import ServiceAccountCredentials
 from controllers.log_controller import log
 from controllers.dataGet_controller import loopColections
 
+def EvenItems(item):
+    #Converts dicts and lists into clean strings for Google Sheets.
+    flattened = {}
+
+    for key, value in item.items():
+        if isinstance(value, list) and all(isinstance(i, dict) for i in value):
+            #Format list of dicts like: item = resposta; item = resposta
+            flattened[key] = "; ".join(
+                f"{d.get('item', '')} = {d.get('resposta', '')}" for d in value
+            )
+        elif isinstance(value, (dict, list)):
+            #General fallback for unexpected complex types
+            flattened[key] = str(value)
+        else:
+            flattened[key] = value
+
+    return flattened
+
+
 def gSheets():
     #Try/Except to connect to GSheets
     try:
@@ -29,16 +48,21 @@ def gSheets():
             log.warning("dataProcessing_controller: No data to write to sheet")
             return
 
-        #Adds headers
+
+        #Calls function to flatten first item to get header keys
         log.info("dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]")
-        headers = list(allDataToExport[0].keys()) # Gets the keys from the first item to use it as headers (ex: "equipamento", "status")
+        first_flat = EvenItems(allDataToExport[0])
+        headers = list(first_flat.keys())        
         sheet.append_row(headers) #Adds headers as the first row
 
         #Writing data into the spreadsheet[row by row]
         log.info("dataProcessing_controller: Writing data")
         for item in allDataToExport:
-            log.info(f"dataProcessing_controller: Adding row -> {item}")
-            print(f"dataProcessing_controller: Adding row -> {item}")
-            sheet.append_row([item[key] for key in headers]) #Adds a new row in the sheet with the values from that item (matching the header order).
+            cleanedUpItem = EvenItems(item)
+            row = [cleanedUpItem.get(key, "") for key in headers]
+            sheet.append_row(row)
+            log.info(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")            
+            print(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")
+
     except Exception as e:
         log.error(f"dataProcessing_controller: error trying to either fetch data from Firebase or sending it to Google Sheets -> {e}")
