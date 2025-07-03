@@ -1,4 +1,3 @@
-// IMPORTS
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
@@ -18,7 +17,6 @@ import { auth, db } from '../../config/firebase-config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 
-// DADOS ESTÁTICOS
 const checklistItems = [
   'Soluta adipisci odit aut.',
   'Asperiores perspiciatis numquam quibusdam atque.',
@@ -30,39 +28,40 @@ const checklistItems = [
 const criterios = ['Sinal estável', 'Dentro dos parâmetros', 'Sem danos visíveis'];
 const statusOptions = ['Inativos', 'Operacional', 'Com falha', 'Em manutenção'];
 
-type Equip = { nome: string; localizacao: string };
+type Equip = {
+  nome: string;
+  localizacao: string;
+  usuario?: string;    // usuário que criou
+  validador?: string;  // quem validou (aprovou) - pode estar ausente ainda
+};
 
-// CHAVES
 const KEY_SUBS = 'cache_subestacoes';
 const KEY_EQUIP = 'cache_equipamentos';
-const KEY_PEND = 'inspecoesPendentes';
+const KEY_PEND = 'cache_equipamentos_pendentes'; // Novo key para pendentes localmente
+const KEY_PEND_INSPECAO = 'inspecoesPendentes';
 const KEY_FORM = 'form_inspecao_cache';
 
-// COMPONENTE PRINCIPAL
 export default function Inspecao() {
   const router = useRouter();
 
-  // FORMULÁRIO
   const [localizacao, setLocalizacao] = useState('');
   const [equipamento, setEquipamento] = useState('');
   const [status, setStatus] = useState('');
   const [respostas, setRespostas] = useState(Array(checklistItems.length).fill(''));
   const [observacao, setObservacao] = useState('');
 
-  // DADOS
   const [subestacoes, setSubestacoes] = useState<string[]>([]);
   const [equipamentos, setEquipamentos] = useState<Equip[]>([]);
+  const [pendentesLocais, setPendentesLocais] = useState<Equip[]>([]);
   const [equipamentosFiltrados, setFiltrados] = useState<string[]>([]);
 
-  // ESTADO DE SUCESSO
   const [salvoComSucesso, setSalvoComSucesso] = useState(false);
   const [mensagemSucesso, setMensagemSucesso] = useState('');
 
-  // CARREGAR DADOS E SYNC
   useEffect(() => {
     (async () => {
       const online = (await NetInfo.fetch()).isConnected ?? false;
-      await Promise.all([loadSubestacoes(online), loadEquipamentos(online)]);
+      await Promise.all([loadSubestacoes(online), loadEquipamentos(online), loadEquipPendentesLocais()]);
       if (online) syncPendentes();
       await carregarFormLocal();
     })();
@@ -70,18 +69,24 @@ export default function Inspecao() {
 
   useEffect(() => {
     setEquipamento('');
-    const filtrados = equipamentos
+    // Juntar equipamentos aprovados e pendentes locais para dropdown
+    const listaCompleta = [...equipamentos, ...pendentesLocais];
+
+    const filtrados = listaCompleta
       .filter(eq => eq.localizacao === localizacao)
       .map(eq => eq.nome);
+
     setFiltrados(filtrados);
-  }, [localizacao, equipamentos]);
+  }, [localizacao, equipamentos, pendentesLocais]);
 
   const loadSubestacoes = async (online: boolean) => {
     try {
       const cached = await AsyncStorage.getItem(KEY_SUBS);
       if (cached) setSubestacoes(JSON.parse(cached));
     } catch {}
+
     if (!online) return;
+
     try {
       const snap = await getDocs(collection(db, 'subestacoes'));
       const lista = snap.docs.map(d => d.data().nome || '').filter(Boolean);
@@ -97,13 +102,20 @@ export default function Inspecao() {
       const cached = await AsyncStorage.getItem(KEY_EQUIP);
       if (cached) setEquipamentos(JSON.parse(cached));
     } catch {}
+
     if (!online) return;
+
     try {
       const snap = await getDocs(collection(db, 'equipamentos'));
       const lista = snap.docs
         .map(d => {
           const dt = d.data();
-          return { nome: dt.nome || '', localizacao: dt.localizacao || '' };
+          return {
+            nome: dt.nome || '',
+            localizacao: dt.localizacao || '',
+            usuario: dt.usuario || '',
+            validador: dt.validador || '',
+          };
         })
         .filter(e => e.nome && e.localizacao);
       setEquipamentos(lista);
@@ -113,15 +125,29 @@ export default function Inspecao() {
     }
   };
 
+  // Carregar pendentes locais de equipamentos (usuários comuns)
+  const loadEquipPendentesLocais = async () => {
+    try {
+      const pendentes = await AsyncStorage.getItem(KEY_PEND);
+      if (pendentes) {
+        setPendentesLocais(JSON.parse(pendentes));
+      } else {
+        setPendentesLocais([]);
+      }
+    } catch (e) {
+      console.error('Erro ao carregar equipamentos pendentes locais:', e);
+    }
+  };
+
   const syncPendentes = useCallback(async () => {
     try {
-      const str = await AsyncStorage.getItem(KEY_PEND);
+      const str = await AsyncStorage.getItem(KEY_PEND_INSPECAO);
       if (!str) return;
       const pend = JSON.parse(str);
       for (const item of pend) {
         await addDoc(collection(db, 'inspecoes'), item);
       }
-      await AsyncStorage.removeItem(KEY_PEND);
+      await AsyncStorage.removeItem(KEY_PEND_INSPECAO);
       Alert.alert('Sincronizado', 'Inspeções pendentes enviadas com sucesso!');
     } catch (e) {
       console.error('Sync:', e);
@@ -187,9 +213,9 @@ export default function Inspecao() {
         setMensagemSucesso('Inspeção registrada com sucesso!');
         await AsyncStorage.removeItem(KEY_FORM);
       } else {
-        const prev = JSON.parse((await AsyncStorage.getItem(KEY_PEND)) || '[]');
+        const prev = JSON.parse((await AsyncStorage.getItem(KEY_PEND_INSPECAO)) || '[]');
         prev.push(dados);
-        await AsyncStorage.setItem(KEY_PEND, JSON.stringify(prev));
+        await AsyncStorage.setItem(KEY_PEND_INSPECAO, JSON.stringify(prev));
         setMensagemSucesso('Inspeção salva localmente e será sincronizada.');
       }
       limpar();
@@ -217,7 +243,6 @@ export default function Inspecao() {
     }
   };
 
-  // SUCESSO
   if (salvoComSucesso) {
     return (
       <View style={[styles.container, styles.successContainer]}>
@@ -230,7 +255,6 @@ export default function Inspecao() {
     );
   }
 
-  // FORMULÁRIO
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -249,29 +273,47 @@ export default function Inspecao() {
           </View>
 
           <View style={styles.field}>
-            <Picker enabled={!!localizacao} selectedValue={equipamento} onValueChange={setEquipamento} style={styles.picker}>
-              <Picker.Item label={localizacao ? 'Selecione o equipamento...' : 'Escolha a subestação primeiro...'} value="" />
-              {equipamentosFiltrados.map((e, i) => <Picker.Item key={i} label={e} value={e} />)}
+            <Picker
+              enabled={!!localizacao}
+              selectedValue={equipamento}
+              onValueChange={setEquipamento}
+              style={styles.picker}
+            >
+              <Picker.Item
+                label={localizacao ? 'Selecione o equipamento...' : 'Escolha a subestação primeiro...'}
+                value=""
+              />
+              {equipamentosFiltrados.map((e, i) => (
+                <Picker.Item key={i} label={e} value={e} />
+              ))}
             </Picker>
           </View>
 
           <View style={styles.field}>
             <Picker selectedValue={status} onValueChange={setStatus} style={styles.picker}>
               <Picker.Item label="Selecione o status..." value="" />
-              {statusOptions.map((s, i) => <Picker.Item key={i} label={s} value={s} />)}
+              {statusOptions.map((s, i) => (
+                <Picker.Item key={i} label={s} value={s} />
+              ))}
             </Picker>
           </View>
 
           {checklistItems.map((item, idx) => (
             <View key={idx} style={styles.field}>
               <Text style={styles.label}>{item}</Text>
-              <Picker selectedValue={respostas[idx]} onValueChange={v => {
-                const arr = [...respostas];
-                arr[idx] = v;
-                setRespostas(arr);
-              }} style={styles.picker}>
+              <Picker
+                selectedValue={respostas[idx]}
+                onValueChange={v => {
+                  const arr = [...respostas];
+                  arr[idx] = v;
+                  setRespostas(arr);
+                }}
+                style={styles.picker}
+              >
                 <Picker.Item label="Selecione..." value="" />
-                {criterios.map((c, i) => <Picker.Item key={i} label={c} value={c} />)}
+                {criterios.map((c, i) => (
+                  <Picker.Item key={i} label={c} value={c} />
+                ))}
               </Picker>
             </View>
           ))}
@@ -299,7 +341,6 @@ export default function Inspecao() {
   );
 }
 
-// ESTILOS
 const { width } = Dimensions.get('window');
 const CARD_MAX = 480;
 
