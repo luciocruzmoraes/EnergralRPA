@@ -14,7 +14,7 @@ def EvenItems(item):
                 f"{d.get('item', '')} = {d.get('resposta', '')}" for d in value
             )
         elif isinstance(value, (dict, list)):
-            #General fallback for unexpected complex types
+            #General backup for unexpected complex types
             flattened[key] = str(value)
         else:
             flattened[key] = value
@@ -35,8 +35,8 @@ def gSheets():
         client = gspread.authorize(creds)
 
         #Opens sheet by name 
-        log.info("dataProcessing_controller: Opening spreadsheet and accessing sheet1")
-        sheet = client.open("PlanilhaTeste").sheet1  #sheet1 is the default first spreadsheet
+        log.info("dataProcessing_controller: Opening spreadsheet")
+        spreadsheet = client.open("PlanilhaTeste")
     except Exception as e:
         log.error(f"dataProcessing_controller: error in connecting to Google SpreadSheet -> {e}")
     
@@ -49,20 +49,30 @@ def gSheets():
             return
 
 
-        #Calls function to flatten first item to get header keys
-        log.info("dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]")
-        first_flat = EvenItems(allDataToExport[0])
-        headers = list(first_flat.keys())        
-        sheet.append_row(headers) #Adds headers as the first row
+        for collectionName, items in allDataToExport.items():
+            if not items:
+                log.warning(f"dataProcessing_controller: No items in collection '{collectionName}'")
+                continue
+            log.info(f"dataProcessing_controller: Processing collection -> {collectionName}")
 
-        #Writing data into the spreadsheet[row by row]
-        log.info("dataProcessing_controller: Writing data")
-        for item in allDataToExport:
-            cleanedUpItem = EvenItems(item)
-            row = [cleanedUpItem.get(key, "") for key in headers]
-            sheet.append_row(row)
-            log.info(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")            
-            print(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")
+
+            #Calls function to flatten first item to get header keys
+            log.info("dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]")
+            first = EvenItems(items[0])
+            headers = list(first.keys())     
+        
+            currentSheet = spreadsheet.worksheet(collectionName)
+
+            currentSheet.append_row(headers)
+
+            #Writing data into the spreadsheet[row by row]
+            log.info("dataProcessing_controller: Writing data [looping each node from json]")
+            for item in items:
+                cleanedUpItem = EvenItems(item)
+                row = [cleanedUpItem.get(key, "") for key in headers]
+                currentSheet.append_row(row)
+                log.info(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")            
+                print(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")
 
     except Exception as e:
         log.error(f"dataProcessing_controller: error trying to either fetch data from Firebase or sending it to Google Sheets -> {e}")

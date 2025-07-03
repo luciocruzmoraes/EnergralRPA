@@ -7,8 +7,8 @@ def loopColections():
     
     collectionsList = getCollectionsList() #Get list of collections    
     
-    #Initializing an empty list
-    allDataToExport = []
+    #Initializing an empty dictionary
+    allDataToExport = {}
     
     log.info(f"dataGet_controller: Looping through collections")
     for collectionName in collectionsList: # Iterate through the collection names
@@ -16,9 +16,7 @@ def loopColections():
         try:
             data = getData(collectionName)
             print(f"inside loopColections data: {data}")
-            for i in data:
-                i['collection'] = collectionName
-                allDataToExport.append(i)
+            allDataToExport[collectionName] = data
         except Exception as e:
             log.error(f"dataGet_controller: Error fetching data for collection {collectionName} -> {e}")
             
