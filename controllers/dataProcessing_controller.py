@@ -63,7 +63,10 @@ def gSheets():
         
             currentSheet = spreadsheet.worksheet(collectionName)
 
-            currentSheet.append_row(headers)
+            existingData = currentSheet.get_all_values()
+            if len(existingData) == 0 or all(cell.strip() == "" for cell in existingData[0]):
+                currentSheet.append_row(headers)
+
 
             #Writing data into the spreadsheet[row by row]
             log.info("dataProcessing_controller: Writing data [looping each node from json]")
