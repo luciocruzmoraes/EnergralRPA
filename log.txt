@@ -1,191 +1,106 @@
-2025-07-02 15:47:38,796 - INFO - Running Main
-2025-07-02 15:47:38,796 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:47:38,796 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:47:38,796 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:47:38,796 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:47:38,829 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:47:40,586 - INFO - firebaseConnection_service: Initializing Firebase app.
-2025-07-02 15:47:40,619 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
-2025-07-02 15:47:40,619 - INFO - dataGet_controller: Looping through collections
-2025-07-02 15:47:40,619 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
-2025-07-02 15:47:40,620 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:47:41,124 - INFO - dataGet_controller: Collection 'inspecoes' yielded 5 documents.
-2025-07-02 15:47:41,125 - INFO - dataGet_controller: Fetching data from collection -> users
-2025-07-02 15:47:41,126 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:47:41,194 - INFO - dataGet_controller: Collection 'users' yielded 2 documents.
-2025-07-02 15:47:41,195 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
-2025-07-02 15:47:41,196 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:47:41,252 - INFO - dataGet_controller: Collection 'subestacoes' yielded 2 documents.
-2025-07-02 15:47:41,253 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
-2025-07-02 15:47:41,253 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:47:41,321 - INFO - dataGet_controller: Collection 'equipamentos' yielded 2 documents.
-2025-07-02 15:47:41,323 - INFO - dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]
-2025-07-02 15:47:41,652 - INFO - dataProcessing_controller: Writing data
-2025-07-02 15:49:04,054 - INFO - Running Main
-2025-07-02 15:49:04,055 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:49:04,055 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:49:04,055 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:49:04,055 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:49:04,093 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:49:05,645 - INFO - firebaseConnection_service: Initializing Firebase app.
-2025-07-02 15:49:05,698 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
-2025-07-02 15:49:05,698 - INFO - dataGet_controller: Looping through collections
-2025-07-02 15:49:05,698 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
-2025-07-02 15:49:05,698 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:49:06,334 - INFO - dataGet_controller: Collection 'inspecoes' yielded 5 documents.
-2025-07-02 15:49:06,335 - INFO - dataGet_controller: Fetching data from collection -> users
-2025-07-02 15:49:06,335 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:49:06,424 - INFO - dataGet_controller: Collection 'users' yielded 2 documents.
-2025-07-02 15:49:06,425 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
-2025-07-02 15:49:06,425 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:49:06,513 - INFO - dataGet_controller: Collection 'subestacoes' yielded 2 documents.
-2025-07-02 15:49:06,514 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
-2025-07-02 15:49:06,514 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:49:06,584 - INFO - dataGet_controller: Collection 'equipamentos' yielded 2 documents.
-2025-07-02 15:49:06,585 - INFO - dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]
-2025-07-02 15:49:07,011 - INFO - dataProcessing_controller: Writing data
-2025-07-02 15:49:17,248 - INFO - Running Main
-2025-07-02 15:49:17,248 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:49:17,248 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:49:17,248 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:49:17,248 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:49:17,290 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:49:18,814 - INFO - firebaseConnection_service: Initializing Firebase app.
-2025-07-02 15:49:18,868 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
-2025-07-02 15:49:18,868 - INFO - dataGet_controller: Looping through collections
-2025-07-02 15:49:18,869 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
-2025-07-02 15:49:18,869 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:49:19,350 - INFO - dataGet_controller: Collection 'inspecoes' yielded 5 documents.
-2025-07-02 15:49:19,352 - INFO - dataGet_controller: Fetching data from collection -> users
-2025-07-02 15:49:19,352 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:49:19,408 - INFO - dataGet_controller: Collection 'users' yielded 2 documents.
-2025-07-02 15:49:19,408 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
-2025-07-02 15:49:19,409 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:49:19,453 - INFO - dataGet_controller: Collection 'subestacoes' yielded 2 documents.
-2025-07-02 15:49:19,454 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
-2025-07-02 15:49:19,455 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:49:19,515 - INFO - dataGet_controller: Collection 'equipamentos' yielded 2 documents.
-2025-07-02 15:49:19,517 - INFO - dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]
-2025-07-02 15:49:19,800 - INFO - dataProcessing_controller: Writing data
-2025-07-02 15:51:06,875 - INFO - Running Main
-2025-07-02 15:51:06,875 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:51:06,875 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:51:06,875 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:51:06,875 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:51:06,918 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:51:55,636 - INFO - Running Main
-2025-07-02 15:51:55,637 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:51:55,637 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:51:55,637 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:51:55,637 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:51:55,677 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:52:12,759 - INFO - Running Main
-2025-07-02 15:52:12,759 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:52:12,759 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:52:12,759 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:52:12,759 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:52:12,798 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:52:14,244 - INFO - firebaseConnection_service: Initializing Firebase app.
-2025-07-02 15:52:14,295 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
-2025-07-02 15:52:14,296 - INFO - dataGet_controller: Looping through collections
-2025-07-02 15:52:14,296 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
-2025-07-02 15:52:14,296 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:52:14,779 - INFO - dataGet_controller: Collection 'inspecoes' yielded 5 documents.
-2025-07-02 15:52:14,780 - INFO - dataGet_controller: Fetching data from collection -> users
-2025-07-02 15:52:14,781 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:52:14,842 - INFO - dataGet_controller: Collection 'users' yielded 2 documents.
-2025-07-02 15:52:14,843 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
-2025-07-02 15:52:14,843 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:52:14,914 - INFO - dataGet_controller: Collection 'subestacoes' yielded 2 documents.
-2025-07-02 15:52:14,916 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
-2025-07-02 15:52:14,916 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:52:14,972 - INFO - dataGet_controller: Collection 'equipamentos' yielded 2 documents.
-2025-07-02 15:52:14,973 - INFO - dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]
-2025-07-02 15:52:15,236 - INFO - dataProcessing_controller: Writing data
-2025-07-02 15:52:39,202 - INFO - Running Main
-2025-07-02 15:52:39,202 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:52:39,202 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:52:39,202 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:52:39,202 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:52:39,236 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:52:40,745 - INFO - firebaseConnection_service: Initializing Firebase app.
-2025-07-02 15:52:40,796 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
-2025-07-02 15:52:40,796 - INFO - dataGet_controller: Looping through collections
-2025-07-02 15:52:40,796 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
-2025-07-02 15:52:40,796 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:52:41,254 - INFO - dataGet_controller: Collection 'inspecoes' yielded 5 documents.
-2025-07-02 15:52:41,256 - INFO - dataGet_controller: Fetching data from collection -> users
-2025-07-02 15:52:41,257 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:52:41,306 - INFO - dataGet_controller: Collection 'users' yielded 2 documents.
-2025-07-02 15:52:41,306 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
-2025-07-02 15:52:41,307 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:52:41,369 - INFO - dataGet_controller: Collection 'subestacoes' yielded 2 documents.
-2025-07-02 15:52:41,371 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
-2025-07-02 15:52:41,371 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:52:41,432 - INFO - dataGet_controller: Collection 'equipamentos' yielded 2 documents.
-2025-07-02 15:52:41,434 - INFO - dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]
-2025-07-02 15:52:41,709 - INFO - dataProcessing_controller: Writing data
-2025-07-02 15:53:20,408 - INFO - Running Main
-2025-07-02 15:53:20,408 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:53:20,408 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:53:20,408 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:53:20,408 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:53:20,451 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:53:21,856 - INFO - firebaseConnection_service: Initializing Firebase app.
-2025-07-02 15:53:21,908 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
-2025-07-02 15:53:21,908 - INFO - dataGet_controller: Looping through collections
-2025-07-02 15:53:21,909 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
-2025-07-02 15:53:21,909 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:23,206 - INFO - dataGet_controller: Collection 'inspecoes' yielded 5 documents.
-2025-07-02 15:53:23,207 - INFO - dataGet_controller: Fetching data from collection -> users
-2025-07-02 15:53:23,208 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:23,284 - INFO - dataGet_controller: Collection 'users' yielded 2 documents.
-2025-07-02 15:53:23,285 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
-2025-07-02 15:53:23,285 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:23,367 - INFO - dataGet_controller: Collection 'subestacoes' yielded 2 documents.
-2025-07-02 15:53:23,369 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
-2025-07-02 15:53:23,369 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:23,438 - INFO - dataGet_controller: Collection 'equipamentos' yielded 2 documents.
-2025-07-02 15:53:42,306 - INFO - Running Main
-2025-07-02 15:53:42,307 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:53:42,307 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:53:42,307 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:53:42,307 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:53:42,341 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:53:43,787 - INFO - firebaseConnection_service: Initializing Firebase app.
-2025-07-02 15:53:43,843 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
-2025-07-02 15:53:43,843 - INFO - dataGet_controller: Looping through collections
-2025-07-02 15:53:43,844 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
-2025-07-02 15:53:43,844 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:44,332 - INFO - dataGet_controller: Collection 'inspecoes' yielded 5 documents.
-2025-07-02 15:53:44,334 - INFO - dataGet_controller: Fetching data from collection -> users
-2025-07-02 15:53:44,334 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:44,384 - INFO - dataGet_controller: Collection 'users' yielded 2 documents.
-2025-07-02 15:53:44,385 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
-2025-07-02 15:53:44,385 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:44,446 - INFO - dataGet_controller: Collection 'subestacoes' yielded 2 documents.
-2025-07-02 15:53:44,447 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
-2025-07-02 15:53:44,447 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:44,518 - INFO - dataGet_controller: Collection 'equipamentos' yielded 2 documents.
-2025-07-02 15:53:55,705 - INFO - Running Main
-2025-07-02 15:53:55,705 - INFO - Main: Calling dataGet_controller
-2025-07-02 15:53:55,705 - INFO - Main: Calling dataProcessing_controller
-2025-07-02 15:53:55,705 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
-2025-07-02 15:53:55,706 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
-2025-07-02 15:53:55,739 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
-2025-07-02 15:53:57,434 - INFO - firebaseConnection_service: Initializing Firebase app.
-2025-07-02 15:53:57,488 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
-2025-07-02 15:53:57,488 - INFO - dataGet_controller: Looping through collections
-2025-07-02 15:53:57,489 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
-2025-07-02 15:53:57,489 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:57,985 - INFO - dataGet_controller: Collection 'inspecoes' yielded 5 documents.
-2025-07-02 15:53:57,987 - INFO - dataGet_controller: Fetching data from collection -> users
-2025-07-02 15:53:57,987 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:58,107 - INFO - dataGet_controller: Collection 'users' yielded 2 documents.
-2025-07-02 15:53:58,108 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
-2025-07-02 15:53:58,109 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:58,171 - INFO - dataGet_controller: Collection 'subestacoes' yielded 2 documents.
-2025-07-02 15:53:58,172 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
-2025-07-02 15:53:58,172 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
-2025-07-02 15:53:58,235 - INFO - dataGet_controller: Collection 'equipamentos' yielded 2 documents.
-2025-07-02 15:53:58,237 - INFO - dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]
+2025-07-03 09:00:26,161 - INFO - Running Main
+2025-07-03 09:00:26,161 - INFO - Main: Calling dataProcessing_controller
+2025-07-03 09:00:26,161 - INFO - dataProcessing_controller: Initializing data processing to send to Google Sheets
+2025-07-03 09:00:26,161 - INFO - dataProcessing_controller: Authentication to Google with the JSON file downloaded
+2025-07-03 09:00:26,196 - INFO - dataProcessing_controller: Opening spreadsheet and accessing sheet1
+2025-07-03 09:00:28,053 - INFO - firebaseConnection_service: Initializing Firebase app.
+2025-07-03 09:00:28,109 - INFO - firebaseConnection_service: Firebase app initialized and Firestore client created.
+2025-07-03 09:00:28,109 - INFO - dataGet_controller: Looping through collections
+2025-07-03 09:00:28,110 - INFO - dataGet_controller: Fetching data from collection -> inspecoes
+2025-07-03 09:00:28,110 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
+2025-07-03 09:00:28,619 - INFO - dataGet_controller: Collection 'inspecoes' submited 5 documents.
+2025-07-03 09:00:28,621 - INFO - dataGet_controller: Fetching data from collection -> users
+2025-07-03 09:00:28,621 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
+2025-07-03 09:00:28,694 - INFO - dataGet_controller: Collection 'users' submited 2 documents.
+2025-07-03 09:00:28,696 - INFO - dataGet_controller: Fetching data from collection -> subestacoes
+2025-07-03 09:00:28,696 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
+2025-07-03 09:00:28,755 - INFO - dataGet_controller: Collection 'subestacoes' submited 2 documents.
+2025-07-03 09:00:28,756 - INFO - dataGet_controller: Fetching data from collection -> equipamentos
+2025-07-03 09:00:28,756 - INFO - dataGet_controller: starting loop for each item in the collection to append to dataDicio
+2025-07-03 09:00:28,821 - INFO - dataGet_controller: Collection 'equipamentos' submited 2 documents.
+2025-07-03 09:00:28,822 - INFO - dataProcessing_controller: Adding headers to the spreasheet by getting the first index [0]
+2025-07-03 09:00:29,229 - INFO - dataProcessing_controller: Writing data
+2025-07-03 09:00:29,229 - INFO - dataProcessing_controller: Adding row -> {'status': 'Inativos', 'data': '2025-07-02T17:36:56.032Z', 'usuario': 'luciodacruzdemoraes@gmail.com', 'observacao': 'teste', 'checklist': [{'item': 'Soluta adipisci odit aut.', 'resposta': 'Dentro dos parâmetros'}, {'item': 'Asperiores perspiciatis numquam quibusdam atque.', 'resposta': 'Sinal estável'}, {'item': 'Veniam dolores magnam porro voluptate occaecat...', 'resposta': 'Dentro dos parâmetros'}, {'item': 'At fuga aspernatur exercitationem odio fugit p...', 'resposta': 'Sinal estável'}, {'item': 'Dolor inventore facere debitis eligendi.', 'resposta': 'Sinal estável'}], 'localizacao': 'Garantido ', 'equipamento': 'Dj GW ', 'uid': 'EF34fnraKUesh3jmTYnfF226irW2', 'id': 'SewZWnTwjH37BFV7miUI', 'collection': 'inspecoes'}
+2025-07-03 09:00:29,553 - ERROR - dataProcessing_controller: error trying to either fetch data from Firebase or sending it to Google Sheets -> APIError: [400]: Invalid values[1][4]: list_value {
+  values {
+    struct_value {
+      fields {
+        key: "item"
+        value {
+          string_value: "Soluta adipisci odit aut."
+        }
+      }
+      fields {
+        key: "resposta"
+        value {
+          string_value: "Dentro dos par\303\242metros"
+        }
+      }
+    }
+  }
+  values {
+    struct_value {
+      fields {
+        key: "item"
+        value {
+          string_value: "Asperiores perspiciatis numquam quibusdam atque."
+        }
+      }
+      fields {
+        key: "resposta"
+        value {
+          string_value: "Sinal est\303\241vel"
+        }
+      }
+    }
+  }
+  values {
+    struct_value {
+      fields {
+        key: "item"
+        value {
+          string_value: "Veniam dolores magnam porro voluptate occaecat..."
+        }
+      }
+      fields {
+        key: "resposta"
+        value {
+          string_value: "Dentro dos par\303\242metros"
+        }
+      }
+    }
+  }
+  values {
+    struct_value {
+      fields {
+        key: "item"
+        value {
+          string_value: "At fuga aspernatur exercitationem odio fugit p..."
+        }
+      }
+      fields {
+        key: "resposta"
+        value {
+          string_value: "Sinal est\303\241vel"
+        }
+      }
+    }
+  }
+  values {
+    struct_value {
+      fields {
+        key: "item"
+        value {
+          string_value: "Dolor inventore facere debitis eligendi."
+        }
+      }
+      fields {
+        key: "resposta"
+        value {
+          string_value: "Sinal est\303\241vel"
+        }
+      }
+    }
+  }
+}
+
