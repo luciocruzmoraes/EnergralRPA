@@ -1,14 +1,31 @@
-from controllers.dataGet_controller import loopColections
 from controllers.log_controller import log
 from controllers.dataProcessing_controller import gSheets
+import schedule
+import time
+
+def runMainTask():
+    #Calling gSheets function from controllers.dataProcessing_controller
+    log.info("Main: Calling dataProcessing_controller")
+    log.info("Main: runMainTask [scheduled run]")
+    print("Main: schedulerRunTime - Run to start the loop [20 seconds loop]")
+    gSheets()
+
+
 
 #Running Main
 log.info("Running Main")
 if __name__ == "__main__":
-    #Calling loopColections function from controllers.dataGet_controller
-    #log.info("Main: Calling dataGet_controller")
-    #loopColections()  
+    runMainTask()
+    
+    #Set job to run every 20 seconds
+    schedule.every(20).seconds.do(runMainTask)
+    log.info("Main: schedulerRunTime - First run to start the loop every 20 seconds")
 
-    #Calling gSheets function from controllers.dataProcessing_controller
-    log.info("Main: Calling dataProcessing_controller")
-    gSheets()
+    
+    #Infinite loop so it runs forever
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
+
