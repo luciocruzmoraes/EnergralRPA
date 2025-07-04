@@ -4,8 +4,10 @@ from email.mime.multipart import MIMEMultipart #cria um e-mail com várias parte
 from email.mime.text import MIMEText #cria a parte de texto do e-mail.
 import smtplib # envia e-mails usando protocolo SMTP (como o do Gmail).
 
+#Function to send the email
 def sendEmail_Critical(item):
-    print("Entrei na func")
+    log.info("email_controller: Got into the sendEmail function")
+    #Setting parameters to send the email
     msg = MIMEMultipart()
     msg['From'] = email_address
     msg['To'] = 'kleberjgrandolffi@gmail.com'
@@ -17,32 +19,33 @@ def sendEmail_Critical(item):
     👤 Usuário: {item.get('usuario', 'N/A')}
     📍 Localização: {item.get('localizacao', 'N/A')}
     🔧 Equipamento: {item.get('equipamento', 'N/A')}
-    🆔 ID da inspeção: {item.get('id', 'N/A')}
+    🆔 ID de Inspeção: {item.get('id', 'N/A')}
     📌 Status: {item.get('status', 'N/A')}
-    🗒️ Observação: {item.get('observacao', '(nenhuma)')}
+    🗒️ Notas: {item.get('observacao', '(nenhuma)')}
     """
-    msg.attach(MIMEText(message, 'plain')) #anexa o corpo à mensagem.
+
+    msg.attach(MIMEText(message, 'plain')) #attaches body to message
     destinatarios = [msg['To']] + [msg['Cc']]
 
 
     try:
-        mailserver = smtplib.SMTP('smtp.gmail.com',587) #Abre conexão com o Gmail (smtp.gmail.com) na porta 587.
-        mailserver.ehlo() # se identifica com o servidor
+        mailserver = smtplib.SMTP('smtp.gmail.com',587) #Opens connection with gmail on port 587.
+        mailserver.ehlo() #Verifies connection
 
-        mailserver.starttls() # ativa criptografia.
+        mailserver.starttls() #Activates cryptography
 
-        mailserver.ehlo() # novamente: reafirma a identidade já criptografada.
+        mailserver.ehlo()
 
         mailserver.login(email_address, app_password)
 
-        mailserver.sendmail(msg['From'], destinatarios, msg.as_string()) #Envia o e-mail do remetente para o destinatário com o conteúdo (msg.as_string() converte tudo para texto puro do e-mail).
+        mailserver.sendmail(msg['From'], destinatarios, msg.as_string()) #Sends email  
 
         mailserver.quit()
-        log.info("E-mail crítico enviado com sucesso.")
-        print("E-mail crítico enviado com sucesso.")
+        log.info("email_controller: Critical email sent")
+        print("Email sent.")
     except Exception as e:
-         log.error(f"Erro ao enviar e-mail crítico: {e}")
-         print(f"Erro ao tentar enviar e-mail: {e}")
+         log.error(f"email_controller: Error on sending critical email: {e}")
+         print(f"Error on sending email: {e}")
 
 
     return 
