@@ -9,8 +9,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../../config/firebase-config';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'expo-router';
@@ -22,6 +21,7 @@ type EquipamentoPend = {
   localizacao: string;
   status: string;
   criadoPor: string;
+  id: string; // Adicionando o id para referência do Firestore
 };
 
 export default function ValidDevice() {
@@ -45,14 +45,22 @@ export default function ValidDevice() {
   const loadPendentes = async () => {
     setLoading(true);
     try {
-      const pendStr = await AsyncStorage.getItem(KEY_PEND);
-      if (pendStr) {
-        setPendentes(JSON.parse(pendStr));
-      } else {
-        setPendentes([]);
-      }
+      const querySnapshot = await getDocs(collection(db, 'equipamentos_pendentes'));
+      
+      const pendentesList: EquipamentoPend[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data() as EquipamentoPend;
+        return {
+          nome: data.nome,
+          localizacao: data.localizacao,
+          status: data.status,
+          criadoPor: data.criadoPor,
+          id: doc.id, // Adicionando o ID do documento
+        };
+      });
+
+      setPendentes(pendentesList.length > 0 ? pendentesList : []);
     } catch (e) {
-      console.error('Erro ao carregar pendentes:', e);
+      console.error('Erro ao carregar pendentes do Firestore:', e);
     } finally {
       setLoading(false);
     }
@@ -64,17 +72,26 @@ export default function ValidDevice() {
       Alert.alert('Erro', 'Usuário não autenticado');
       return;
     }
+
     try {
       const equipamento = pendentes[index];
-      await addDoc(collection(db, 'equipamentos'), {
-        ...equipamento,
-        criadoPor: equipamento.criadoPor,
-        validadoPor: user.email,
-      });
 
+      // Utilizando o status original
+      const docRef = await addDoc(collection(db, 'equipamentos'), {
+        ...equipamento,
+        validadoPor: user.email,
+        status: equipamento.status,  // Não alterando o status
+      });
+      console.log('Equipamento aprovado com sucesso. Documento ID:', docRef.id);
+
+      // Remover o equipamento da lista de pendentes
+      const equipamentoRef = doc(db, 'equipamentos_pendentes', equipamento.id); // Usando o ID correto
+      console.log('Removendo equipamento pendente:', equipamentoRef.path);
+      await deleteDoc(equipamentoRef);
+
+      // Atualizando o estado local
       const newPendentes = [...pendentes];
       newPendentes.splice(index, 1);
-      await AsyncStorage.setItem(KEY_PEND, JSON.stringify(newPendentes));
       setPendentes(newPendentes);
 
       Alert.alert('Sucesso', 'Equipamento aprovado e salvo no banco.');
@@ -85,11 +102,23 @@ export default function ValidDevice() {
   };
 
   const rejeitar = async (index: number) => {
-    const newPendentes = [...pendentes];
-    newPendentes.splice(index, 1);
-    await AsyncStorage.setItem(KEY_PEND, JSON.stringify(newPendentes));
-    setPendentes(newPendentes);
-    Alert.alert('Rejeitado', 'Equipamento removido da lista de pendentes.');
+    const equipamento = pendentes[index];
+
+    try {
+      const equipamentoRef = doc(db, 'equipamentos_pendentes', equipamento.id); // Usando o ID correto
+      console.log('Removendo equipamento rejeitado:', equipamentoRef.path);
+      await deleteDoc(equipamentoRef);
+
+      // Atualizando o estado local
+      const newPendentes = [...pendentes];
+      newPendentes.splice(index, 1);
+      setPendentes(newPendentes);
+
+      Alert.alert('Rejeitado', 'Equipamento removido da lista de pendentes.');
+    } catch (e) {
+      console.error('Erro ao rejeitar:', e);
+      Alert.alert('Erro', 'Não foi possível rejeitar o equipamento.');
+    }
   };
 
   if (isAdmin === null || loading) {

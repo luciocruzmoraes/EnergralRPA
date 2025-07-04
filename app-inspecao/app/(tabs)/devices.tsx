@@ -13,13 +13,22 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, getDoc, doc } from 'firebase/firestore';
 import NetInfo from '@react-native-community/netinfo';
 import { auth, db } from '../../config/firebase-config';
 import { useRouter } from 'expo-router';
 
 const KEY_EQUIP = 'cache_equipamentos';
 const KEY_PEND = 'equipamentosPendentes';
+
+const STATUS_OPTIONS = [
+  { label: 'Selecione o Status', value: '' },
+  { label: 'Em Manutenção', value: 'manutencao' },
+  { label: 'Operacional', value: 'ativo' },
+  { label: 'Inativo', value: 'inativo' },
+  { label: 'Desativado', value: 'desativado' },
+  { label: 'Com falha', value: 'com-falha' },
+];
 
 export default function Devices() {
   const router = useRouter();
@@ -29,11 +38,21 @@ export default function Devices() {
   const [equipamentosFiltrados, setEquipamentosFiltrados] = useState<any[]>([]);
   const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState('');
   const [nomeNovoEquipamento, setNomeNovoEquipamento] = useState('');
+  const [statusNovoEquipamento, setStatusNovoEquipamento] = useState('pendente'); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!localizacaoSelecionada) {
+      setEquipamentosFiltrados([]);
+      return;
+    }
+    const filtrados = equipamentos.filter(eq => eq.localizacao === localizacaoSelecionada);
+    setEquipamentosFiltrados(filtrados);
+  }, [localizacaoSelecionada, equipamentos]);
 
   const syncEquipamentosPendentes = async () => {
     const online = (await NetInfo.fetch()).isConnected ?? false;
@@ -49,9 +68,8 @@ export default function Devices() {
       }
 
       await AsyncStorage.removeItem(KEY_PEND);
-      console.log('Pendentes sincronizados com sucesso!');
-    } catch (e) {
-      console.error('Erro ao sincronizar equipamentos pendentes:', e);
+    } catch (e: any) {
+      console.error('Erro ao sincronizar equipamentos pendentes:', e.message || e);
     }
   };
 
@@ -64,7 +82,7 @@ export default function Devices() {
       const locais = snapshot.docs.map(doc => doc.data().nome).filter(Boolean);
       setLocalizacoes(locais);
       await AsyncStorage.setItem('cache_subestacoes', JSON.stringify(locais));
-    } catch (e) {
+    } catch {
       const cacheLocais = await AsyncStorage.getItem('cache_subestacoes');
       if (cacheLocais) setLocalizacoes(JSON.parse(cacheLocais));
     }
@@ -84,7 +102,7 @@ export default function Devices() {
         };
       }).filter(eq => eq.nome && eq.localizacao);
       await AsyncStorage.setItem(KEY_EQUIP, JSON.stringify(equipamentosFS));
-    } catch (e) {
+    } catch {
       const cacheEquip = await AsyncStorage.getItem(KEY_EQUIP);
       if (cacheEquip) equipamentosFS = JSON.parse(cacheEquip);
     }
@@ -95,77 +113,80 @@ export default function Devices() {
       if (pendStr) {
         pendentes = JSON.parse(pendStr).map((e: any) => ({ ...e, pendente: true }));
       }
-    } catch (e) {}
+    } catch {}
 
     const todosEquipamentos = [...equipamentosFS, ...pendentes];
     setEquipamentos(todosEquipamentos);
-
     await syncEquipamentosPendentes();
-
     setLoading(false);
   };
 
-  useEffect(() => {
-    if (!localizacaoSelecionada) {
-      setEquipamentosFiltrados([]);
-      return;
-    }
-    const filtrados = equipamentos.filter(eq => eq.localizacao === localizacaoSelecionada);
-    setEquipamentosFiltrados(filtrados);
-  }, [localizacaoSelecionada, equipamentos]);
-
   const cadastrarEquipamento = async () => {
     const user = auth.currentUser;
-    if (!user) return Alert.alert('Erro', 'Usuário não autenticado.');
+    if (!user) {
+      Alert.alert('Erro', 'Usuário não autenticado.');
+      return;
+    }
+    if (!nomeNovoEquipamento || !localizacaoSelecionada || !statusNovoEquipamento) {
+      Alert.alert('Erro', 'Preencha todos os campos.');
+      return;
+    }
 
-    if (!nomeNovoEquipamento || !localizacaoSelecionada)
-      return Alert.alert('Erro', 'Preencha todos os campos.');
-
-    const novoEquipamento = {
+    const novoEquipamentoBase = {
       nome: nomeNovoEquipamento,
       localizacao: localizacaoSelecionada,
       criadoPor: user.email,
+      status: statusNovoEquipamento,
+      timestamp: new Date().toISOString(),
     };
 
     const online = (await NetInfo.fetch()).isConnected ?? false;
-    console.log('Estado de Conexão:', online ? 'Online' : 'Offline'); // Verificando o estado de conexão
 
     try {
-      // Verificar se o usuário é admin
-      const userDoc = await getDocs(collection(db, 'users'));
-      const userData = userDoc.docs.find(d => d.id === user.uid)?.data();
-      const isAdmin = userData?.role === 'admin';
+      let isAdmin = false;
 
-      console.log('User role:', userData?.role); // Depuração para garantir que o papel do usuário está correto
+      if (online) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          const userData = userDocSnap.exists() ? userDocSnap.data() : null;
+          isAdmin = userData?.role === 'admin';
+        } catch {
+          console.warn('Não foi possível verificar se é admin. Assumindo que NÃO é admin.');
+          isAdmin = false;
+        }
+      }
 
       if (online) {
         if (isAdmin) {
-          console.log('Salvando equipamento na coleção "equipamentos"'); // Log para verificar se entrou aqui
-          // Se for admin e online, salva na coleção 'equipamentos'
           await addDoc(collection(db, 'equipamentos'), {
-            ...novoEquipamento,
+            ...novoEquipamentoBase,
             validadoPor: user.email,
+            status: 'validado',
           });
         } else {
-          console.log('Salvando equipamento na coleção "equipamentos_pendentes"'); // Log para verificar se entrou aqui
-          // Se não for admin, salva na coleção 'equipamentos_pendentes'
-          await addDoc(collection(db, 'equipamentos_pendentes'), novoEquipamento);
+          await addDoc(collection(db, 'equipamentos_pendentes'), {
+            ...novoEquipamentoBase,
+            status: 'pendente',
+          });
         }
       } else {
-        console.log('Salvando equipamento no AsyncStorage devido à falta de conexão'); // Log para verificar se entrou aqui
-        // Se estiver offline, salva localmente no AsyncStorage
-        const prev = JSON.parse(await AsyncStorage.getItem(KEY_PEND) || '[]');
-        prev.push(novoEquipamento);
-        await AsyncStorage.setItem(KEY_PEND, JSON.stringify(prev));
+        const pendentes = JSON.parse(await AsyncStorage.getItem(KEY_PEND) || '[]');
+        pendentes.push({
+          ...novoEquipamentoBase,
+          status: 'pendente',
+        });
+        await AsyncStorage.setItem(KEY_PEND, JSON.stringify(pendentes));
       }
 
       setNomeNovoEquipamento('');
+      setStatusNovoEquipamento('pendente'); // Resetando o status
       Alert.alert('Sucesso', 'Equipamento cadastrado com sucesso!');
-      loadData(); // Atualizar dados
+      loadData();
 
-    } catch (e) {
-      console.error('Erro ao cadastrar equipamento:', e);
-      Alert.alert('Erro', `Falha ao cadastrar equipamento: ${Error || e}`);
+    } catch (e: any) {
+      console.error('Erro ao cadastrar equipamento:', e.message || e);
+      Alert.alert('Erro', `Falha ao cadastrar equipamento: ${e.message || 'Erro desconhecido'}`);
     }
   };
 
@@ -182,12 +203,13 @@ export default function Devices() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
-          <Text style={styles.title}>Equipamentos</Text>
+          <Text style={styles.title}>Gerenciamento de Equipamentos</Text>
 
           <Picker
             selectedValue={localizacaoSelecionada}
             onValueChange={setLocalizacaoSelecionada}
             style={styles.picker}
+            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : {}}
           >
             <Picker.Item label="Selecione a Localização" value="" />
             {localizacoes.map((loc, i) => (
@@ -200,20 +222,33 @@ export default function Devices() {
             onChangeText={setNomeNovoEquipamento}
             placeholder="Nome do novo equipamento"
             placeholderTextColor="#bbb"
-            style={styles.picker}
+            style={styles.textInput}
           />
+
+          {/* Picker atualizado para utilizar os status da survey */}
+          <Picker
+            selectedValue={statusNovoEquipamento}
+            onValueChange={setStatusNovoEquipamento}
+            style={styles.picker}
+            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : {}}
+          >
+            {STATUS_OPTIONS.map((status) => (
+              <Picker.Item key={status.value} label={status.label} value={status.value} />
+            ))}
+          </Picker>
 
           <TouchableOpacity style={styles.btn} onPress={cadastrarEquipamento}>
             <Text style={styles.btnTxt}>Cadastrar Equipamento</Text>
           </TouchableOpacity>
 
+          <Text style={styles.subtitle}>Equipamentos na Localização Selecionada</Text>
           {equipamentosFiltrados.length === 0 ? (
             <Text style={styles.emptyText}>Nenhum equipamento para esta localização.</Text>
           ) : (
             equipamentosFiltrados.map((eq, idx) => (
               <View key={idx} style={[styles.equipamentoCard, eq.pendente && styles.pendente]}>
                 <Text style={styles.equipNome}>{eq.nome}</Text>
-                <Text style={styles.equipStatus}>Status: {eq.status || '—'}</Text>
+                <Text style={styles.equipStatus}>Status: {eq.status || 'Não definido'}</Text>
                 <Text style={styles.equipInfo}>Criado por: {eq.criadoPor || 'Desconhecido'}</Text>
                 {eq.validadoPor ? (
                   <Text style={styles.equipInfo}>Validado por: {eq.validadoPor}</Text>
@@ -233,79 +268,125 @@ const { width } = Dimensions.get('window');
 const CARD_MAX = 480;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  scroll: { padding: 20, alignItems: 'center', paddingBottom: 80 },
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+  },
+  scroll: {
+    padding: 20,
+    alignItems: 'center',
+    paddingBottom: 80,
+  },
   card: {
     width: '100%',
     maxWidth: Platform.OS === 'web' ? CARD_MAX : '100%',
-    backgroundColor: '#333',
+    backgroundColor: '#2a2a2a',
     borderRadius: 12,
-    padding: 20,
+    padding: 25,
+    elevation: 8,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: 'yellow',
-    marginBottom: 20,
+    color: '#FFD700',
+    marginBottom: 25,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#ADD8E6',
+    marginTop: 20,
+    marginBottom: 15,
     textAlign: 'center',
   },
   picker: {
-    backgroundColor: '#444',
+    backgroundColor: '#3a3a3a',
     color: '#fff',
     height: 50,
     borderRadius: 8,
     marginBottom: 20,
     paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#555',
+  },
+  pickerItem: {
+    color: '#fff',
+  },
+  textInput: {
+    backgroundColor: '#3a3a3a',
+    color: '#fff',
+    height: 50,
+    borderRadius: 8,
+    marginBottom: 20,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#555',
   },
   btn: {
-    backgroundColor: '#007aff',
-    borderRadius: 8,
+    backgroundColor: '#1E90FF',
+    borderRadius: 10,
     padding: 15,
     marginBottom: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
   },
-  btnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  btnTxt: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+    textTransform: 'uppercase',
+  },
   emptyText: {
-    color: '#ccc',
+    color: '#bbb',
     fontSize: 16,
     textAlign: 'center',
     marginTop: 30,
+    fontStyle: 'italic',
   },
   equipamentoCard: {
-    backgroundColor: '#222',
-    padding: 15,
+    backgroundColor: '#333',
+    padding: 18,
     borderRadius: 10,
-    marginBottom: 12,
+    marginBottom: 15,
+    borderLeftWidth: 5,
+    borderLeftColor: '#1E90FF',
+    elevation: 4,
   },
   pendente: {
-    borderColor: '#f90',
-    borderWidth: 2,
-    backgroundColor: '#442a00',
+    borderLeftColor: '#FFD700',
+    backgroundColor: '#4a3a00',
   },
   equipNome: {
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 20,
     color: '#fff',
+    marginBottom: 5,
   },
   equipStatus: {
-    color: '#aaa',
-    marginTop: 4,
-  },
-  equipInfo: {
     color: '#ccc',
     marginTop: 4,
-    fontSize: 12,
+    fontSize: 15,
+  },
+  equipInfo: {
+    color: '#aaa',
+    marginTop: 6,
+    fontSize: 13,
+    fontStyle: 'italic',
   },
   pendenteInfo: {
-    marginTop: 6,
-    fontSize: 12,
-    color: '#f90',
+    marginTop: 8,
+    fontSize: 14,
+    color: '#FFD700',
     fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
 });
