@@ -26,13 +26,13 @@ const checklistItems = [
 ];
 
 const criterios = ['Sinal estável', 'Dentro dos parâmetros', 'Sem danos visíveis'];
-const statusOptions = ['Inativos', 'Operacional', 'Com falha', 'Em manutenção'];
+const statusOptions = ['Inativos', 'Operacional', 'Com falha', 'Em manutenção','Falha Crítica'];
 
 type Equip = {
   nome: string;
   localizacao: string;
-  usuario?: string;    // usuário que criou
-  validador?: string;  // quem validou (aprovou) - pode estar ausente ainda
+  usuario?: string;    
+  validador?: string;  
 };
 
 const KEY_SUBS = 'cache_subestacoes';

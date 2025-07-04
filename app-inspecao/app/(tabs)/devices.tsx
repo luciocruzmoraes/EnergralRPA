@@ -9,7 +9,7 @@ import {
   Platform,
   ScrollView,
   TextInput,
-  Dimensions
+  Dimensions,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,6 +28,7 @@ const STATUS_OPTIONS = [
   { label: 'Inativo', value: 'inativo' },
   { label: 'Desativado', value: 'desativado' },
   { label: 'Com falha', value: 'com-falha' },
+  { label: 'Falha Crítica', value: 'falha-critica' },
 ];
 
 export default function Devices() {
@@ -38,11 +39,20 @@ export default function Devices() {
   const [equipamentosFiltrados, setEquipamentosFiltrados] = useState<any[]>([]);
   const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState('');
   const [nomeNovoEquipamento, setNomeNovoEquipamento] = useState('');
-  const [statusNovoEquipamento, setStatusNovoEquipamento] = useState('pendente'); 
+  const [statusNovoEquipamento, setStatusNovoEquipamento] = useState('pendente');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
+        router.replace('/');
+      } else {
+        await loadData();
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
@@ -53,6 +63,15 @@ export default function Devices() {
     const filtrados = equipamentos.filter(eq => eq.localizacao === localizacaoSelecionada);
     setEquipamentosFiltrados(filtrados);
   }, [localizacaoSelecionada, equipamentos]);
+
+  const logout = async () => {
+    try {
+      await auth.signOut();
+      router.replace('/');
+    } catch {
+      Alert.alert('Erro', 'Não foi possível sair.');
+    }
+  };
 
   const syncEquipamentosPendentes = async () => {
     const online = (await NetInfo.fetch()).isConnected ?? false;
@@ -123,10 +142,12 @@ export default function Devices() {
 
   const cadastrarEquipamento = async () => {
     const user = auth.currentUser;
+
     if (!user) {
-      Alert.alert('Erro', 'Usuário não autenticado.');
+      Alert.alert('Erro', 'Sessão não carregada. Reabra o app ou faça login novamente.');
       return;
     }
+
     if (!nomeNovoEquipamento || !localizacaoSelecionada || !statusNovoEquipamento) {
       Alert.alert('Erro', 'Preencha todos os campos.');
       return;
@@ -152,7 +173,6 @@ export default function Devices() {
           const userData = userDocSnap.exists() ? userDocSnap.data() : null;
           isAdmin = userData?.role === 'admin';
         } catch {
-          console.warn('Não foi possível verificar se é admin. Assumindo que NÃO é admin.');
           isAdmin = false;
         }
       }
@@ -180,10 +200,9 @@ export default function Devices() {
       }
 
       setNomeNovoEquipamento('');
-      setStatusNovoEquipamento('pendente'); // Resetando o status
+      setStatusNovoEquipamento('pendente');
       Alert.alert('Sucesso', 'Equipamento cadastrado com sucesso!');
       loadData();
-
     } catch (e: any) {
       console.error('Erro ao cadastrar equipamento:', e.message || e);
       Alert.alert('Erro', `Falha ao cadastrar equipamento: ${e.message || 'Erro desconhecido'}`);
@@ -203,7 +222,12 @@ export default function Devices() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
-          <Text style={styles.title}>Gerenciamento de Equipamentos</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.title}>Gerenciamento de Equipamentos</Text>
+            <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+              <Text style={styles.logoutTxt}>Sair</Text>
+            </TouchableOpacity>
+          </View>
 
           <Picker
             selectedValue={localizacaoSelecionada}
@@ -225,7 +249,6 @@ export default function Devices() {
             style={styles.textInput}
           />
 
-          {/* Picker atualizado para utilizar os status da survey */}
           <Picker
             selectedValue={statusNovoEquipamento}
             onValueChange={setStatusNovoEquipamento}
@@ -242,6 +265,7 @@ export default function Devices() {
           </TouchableOpacity>
 
           <Text style={styles.subtitle}>Equipamentos na Localização Selecionada</Text>
+
           {equipamentosFiltrados.length === 0 ? (
             <Text style={styles.emptyText}>Nenhum equipamento para esta localização.</Text>
           ) : (
@@ -268,6 +292,12 @@ const { width } = Dimensions.get('window');
 const CARD_MAX = 480;
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',
@@ -285,18 +315,29 @@ const styles = StyleSheet.create({
     padding: 25,
     elevation: 8,
   },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-    justifyContent: 'center',
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
     color: '#FFD700',
-    marginBottom: 25,
-    textAlign: 'center',
+    flex: 1,  // Adicionando flex para centralizar
+    textAlign: 'center',  // Centraliza o título
+  },
+  logoutBtn: {
+    backgroundColor: '#555',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  logoutTxt: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   subtitle: {
     fontSize: 20,
