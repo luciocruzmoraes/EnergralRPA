@@ -27,7 +27,7 @@ const STATUS_OPTIONS = [
   { label: 'Operacional', value: 'ativo' },
   { label: 'Inativo', value: 'inativo' },
   { label: 'Desativado', value: 'desativado' },
-  { label: 'Com falha', value: 'com-falha' },
+  { label: 'Com Falha', value: 'com-falha' },
   { label: 'Falha Crítica', value: 'falha-critica' },
 ];
 

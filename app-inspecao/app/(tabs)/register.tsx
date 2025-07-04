@@ -201,7 +201,6 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between', // Garante que o título e o botão fiquem em extremos opostos
     width: '100%',
     alignItems: 'center',
     marginBottom: 20,
@@ -212,7 +211,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: Platform.OS === 'android' ? 'Roboto' : 'System',
     textAlign: 'center',
-    flex: 1, // Garante que o título ocupe todo o espaço disponível e fique centralizado
+    flex: 1, 
   },
   logoutButton: {
     backgroundColor: '#555',

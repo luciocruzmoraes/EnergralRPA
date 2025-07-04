@@ -26,7 +26,7 @@ const checklistItems = [
 ];
 
 const criterios = ['Sinal estável', 'Dentro dos parâmetros', 'Sem danos visíveis'];
-const statusOptions = ['Inativos', 'Operacional', 'Com falha', 'Em manutenção','Falha Crítica'];
+const statusOptions = ['Inativo', 'Operacional', 'Com Falha', 'Em Manutenção','Falha Crítica'];
 
 type Equip = {
   nome: string;
