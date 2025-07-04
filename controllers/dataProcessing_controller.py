@@ -36,7 +36,7 @@ def gSheets():
 
         #Opens sheet by name 
         log.info("dataProcessing_controller: Opening spreadsheet")
-        spreadsheet = client.open("PlanilhaTeste")
+        spreadsheet = client.open("PlanilhaEnergral")
     except Exception as e:
         log.error(f"dataProcessing_controller: error in connecting to Google SpreadSheet -> {e}")
     
@@ -87,7 +87,7 @@ def gSheets():
                 row = [cleanedUpItem.get(key, "") for key in headers]
                 currentSheet.append_row(row)
                 log.info(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")            
-                print(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")
+                #print(f"dataProcessing_controller: Adding row -> {cleanedUpItem}")
 
     except Exception as e:
         log.error(f"dataProcessing_controller: error trying to either fetch data from Firebase or sending it to Google Sheets -> {e}")

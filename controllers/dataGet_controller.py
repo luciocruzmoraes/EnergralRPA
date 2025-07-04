@@ -12,10 +12,10 @@ def loopColections():
     
     log.info(f"dataGet_controller: Looping through collections")
     for collectionName in collectionsList: # Iterate through the collection names
-        print(f"\n- Collection {collectionName} -\n")
+        #print(f"\n- Collection {collectionName} -\n")
         try:
             data = getData(collectionName)
-            print(f"inside loopColections data: {data}")
+            #print(f"inside loopColections data: {data}")
             allDataToExport[collectionName] = data
         except Exception as e:
             log.error(f"dataGet_controller: Error fetching data for collection {collectionName} -> {e}")
@@ -30,18 +30,18 @@ def getData(collectionName):
     db = getDB()    
 
     dataExtracted_Rough = db.collection(collectionName).stream()
-    dataDicio = []
+    dataList = []
     itemCount = 0 # To log how many items are found
-    log.info("dataGet_controller: starting loop for each item in the collection to append to dataDicio")
+    log.info("dataGet_controller: starting loop for each item in the collection to append to dataList")
     for item in dataExtracted_Rough:
         itemCount += 1
         record = item.to_dict() # Converts firebase document 
-        print(f"record {record}")
+        #print(f"record {record}")
         record['id'] = item.id  # Include Firestore document ID to item
-        print(f"record['id'] {record['id']}")
-        dataDicio.append(record) # Appends items to dictionary
-        print(f"\nDicio dentro dataGet = {dataDicio}\n")
+        #print(f"record['id'] {record['id']}")
+        dataList.append(record) # Appends items to dictionary
+        #print(f"\nDicio dentro dataGet = {dataList}\n")
 
     log.info(f"dataGet_controller: Collection '{collectionName}' submited {itemCount} documents.")
     
-    return dataDicio
+    return dataList
