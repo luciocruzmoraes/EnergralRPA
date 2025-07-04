@@ -113,11 +113,13 @@ export default function CadastroUsuario() {
   return (
     <View style={styles.container}>
       <View style={styles.form}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Sair</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.title}>Cadastro de Usuário</Text>
+        {/* Cabeçalho com título e botão de logout */}
+        <View style={styles.cardHeader}>
+          <Text style={styles.title}>Cadastro de Usuário</Text>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Sair</Text>
+          </TouchableOpacity>
+        </View>
 
         <TextInput
           placeholder="Nome"
@@ -197,25 +199,31 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
   },
-  logoutButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 10,
-    padding: 8,
-    backgroundColor: '#555',
-    borderRadius: 6,
-  },
-  logoutText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', // Garante que o título e o botão fiquem em extremos opostos
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   title: {
     color: 'yellow',
     fontSize: 24,
-    marginBottom: 20,
     fontWeight: 'bold',
     fontFamily: Platform.OS === 'android' ? 'Roboto' : 'System',
     textAlign: 'center',
+    flex: 1, // Garante que o título ocupe todo o espaço disponível e fique centralizado
+  },
+  logoutButton: {
+    backgroundColor: '#555',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  logoutText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   input: {
     width: '100%',
