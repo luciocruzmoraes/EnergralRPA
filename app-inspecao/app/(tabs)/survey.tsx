@@ -16,6 +16,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { auth, db } from '../../config/firebase-config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
+import moment from 'moment-timezone'; // Importando a biblioteca
 
 const checklistItems = [
   'Soluta adipisci odit aut.',
@@ -26,25 +27,25 @@ const checklistItems = [
 ];
 
 const criterios = ['Sinal estável', 'Dentro dos parâmetros', 'Sem danos visíveis'];
-const statusOptions = ['Inativo', 'Operacional', 'Com Falha', 'Em Manutenção','Falha Crítica'];
+const statusOptions = ['Inativo', 'Operacional', 'Com Falha', 'Em Manutenção', 'Falha Crítica'];
 
 type Equip = {
   nome: string;
-  localizacao: string;
-  usuario?: string;    
-  validador?: string;  
+  subestacao: string;
+  usuario?: string;
+  validador?: string;
 };
 
 const KEY_SUBS = 'cache_subestacoes';
 const KEY_EQUIP = 'cache_equipamentos';
-const KEY_PEND = 'cache_equipamentos_pendentes'; // Novo key para pendentes localmente
+const KEY_PEND = 'cache_equipamentos_pendentes';
 const KEY_PEND_INSPECAO = 'inspecoesPendentes';
 const KEY_FORM = 'form_inspecao_cache';
 
 export default function Inspecao() {
   const router = useRouter();
 
-  const [localizacao, setLocalizacao] = useState('');
+  const [subestacao, setSubestacao] = useState('');
   const [equipamento, setEquipamento] = useState('');
   const [status, setStatus] = useState('');
   const [respostas, setRespostas] = useState(Array(checklistItems.length).fill(''));
@@ -69,15 +70,14 @@ export default function Inspecao() {
 
   useEffect(() => {
     setEquipamento('');
-    // Juntar equipamentos aprovados e pendentes locais para dropdown
     const listaCompleta = [...equipamentos, ...pendentesLocais];
 
     const filtrados = listaCompleta
-      .filter(eq => eq.localizacao === localizacao)
+      .filter(eq => eq.subestacao === subestacao)
       .map(eq => eq.nome);
 
     setFiltrados(filtrados);
-  }, [localizacao, equipamentos, pendentesLocais]);
+  }, [subestacao, equipamentos, pendentesLocais]);
 
   const loadSubestacoes = async (online: boolean) => {
     try {
@@ -112,12 +112,12 @@ export default function Inspecao() {
           const dt = d.data();
           return {
             nome: dt.nome || '',
-            localizacao: dt.localizacao || '',
+            subestacao: dt.subestacao || '',
             usuario: dt.usuario || '',
             validador: dt.validador || '',
           };
         })
-        .filter(e => e.nome && e.localizacao);
+        .filter(e => e.nome && e.subestacao);
       setEquipamentos(lista);
       await AsyncStorage.setItem(KEY_EQUIP, JSON.stringify(lista));
     } catch (e) {
@@ -125,7 +125,6 @@ export default function Inspecao() {
     }
   };
 
-  // Carregar pendentes locais de equipamentos (usuários comuns)
   const loadEquipPendentesLocais = async () => {
     try {
       const pendentes = await AsyncStorage.getItem(KEY_PEND);
@@ -155,18 +154,18 @@ export default function Inspecao() {
   }, []);
 
   useEffect(() => {
-    const dados = { localizacao, equipamento, status, respostas, observacao };
+    const dados = { subestacao, equipamento, status, respostas, observacao };
     AsyncStorage.setItem(KEY_FORM, JSON.stringify(dados)).catch(e => {
       console.error('Erro ao salvar form local:', e);
     });
-  }, [localizacao, equipamento, status, respostas, observacao]);
+  }, [subestacao, equipamento, status, respostas, observacao]);
 
   const carregarFormLocal = async () => {
     try {
       const json = await AsyncStorage.getItem(KEY_FORM);
       if (json) {
         const dados = JSON.parse(json);
-        if (dados.localizacao) setLocalizacao(dados.localizacao);
+        if (dados.subestacao) setSubestacao(dados.subestacao);
         if (dados.equipamento) setEquipamento(dados.equipamento);
         if (dados.status) setStatus(dados.status);
         if (dados.respostas && Array.isArray(dados.respostas))
@@ -185,7 +184,7 @@ export default function Inspecao() {
       return;
     }
 
-    if (!localizacao || !equipamento || !status) {
+    if (!subestacao || !equipamento || !status) {
       Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
       return;
     }
@@ -196,14 +195,15 @@ export default function Inspecao() {
     }
 
     const dados = {
-      uid: user.uid,
-      usuario: user.email,
-      equipamento,
-      localizacao,
       status,
-      checklist: checklistItems.map((item, i) => ({ item, resposta: respostas[i] })),
+      data: moment().tz('America/Sao_Paulo').toISOString(),
+      usuario: user.email,
       observacao,
-      data: new Date().toISOString(),
+      checklist: checklistItems.map((item, i) => ({ item, resposta: respostas[i] })),
+      subestacao,
+      equipamento,
+      uid: user.uid,
+      id: `${user.uid}-${new Date().toISOString()}`, // Gerando um ID único
     };
 
     const online = (await NetInfo.fetch()).isConnected ?? false;
@@ -227,7 +227,7 @@ export default function Inspecao() {
   };
 
   const limpar = () => {
-    setLocalizacao('');
+    setSubestacao('');
     setEquipamento('');
     setStatus('');
     setRespostas(Array(checklistItems.length).fill(''));
@@ -259,14 +259,15 @@ export default function Inspecao() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-            <Text style={styles.logoutTxt}>Sair</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.heading}>Formulário de Inspeção</Text>
+          <View style={styles.header}>
+            <Text style={styles.heading}>Formulário de Inspeção</Text>
+            <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+              <Text style={styles.logoutTxt}>Sair</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.field}>
-            <Picker selectedValue={localizacao} onValueChange={setLocalizacao} style={styles.picker}>
+            <Picker selectedValue={subestacao} onValueChange={setSubestacao} style={styles.picker}>
               <Picker.Item label="Selecione a subestação..." value="" />
               {subestacoes.map((s, i) => <Picker.Item key={i} label={s} value={s} />)}
             </Picker>
@@ -274,13 +275,13 @@ export default function Inspecao() {
 
           <View style={styles.field}>
             <Picker
-              enabled={!!localizacao}
+              enabled={!!subestacao}
               selectedValue={equipamento}
               onValueChange={setEquipamento}
               style={styles.picker}
             >
               <Picker.Item
-                label={localizacao ? 'Selecione o equipamento...' : 'Escolha a subestação primeiro...'}
+                label={subestacao ? 'Selecione o equipamento...' : 'Escolha a subestação primeiro...'}
                 value=""
               />
               {equipamentosFiltrados.map((e, i) => (
@@ -354,21 +355,25 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
   },
-  logoutBtn: {
-    alignSelf: 'flex-end',
-    padding: 8,
-    backgroundColor: '#555',
-    borderRadius: 6,
-    marginBottom: 10,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  logoutTxt: { color: '#fff', fontWeight: 'bold' },
   heading: {
     fontSize: 24,
     color: 'yellow',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    flex: 1, // Garantir que o título ocupe o espaço disponível
   },
+  logoutBtn: {
+    padding: 8,
+    backgroundColor: '#555',
+    borderRadius: 6,
+  },
+  logoutTxt: { color: '#fff', fontWeight: 'bold' },
   field: { marginBottom: 15 },
   label: { color: '#fff', marginBottom: 6, fontSize: 14 },
   picker: {

@@ -33,6 +33,7 @@
     "expo-system-ui": "~5.0.9",
     "expo-web-browser": "~14.2.0",
     "firebase": "^11.10.0",
+    "moment-timezone": "^0.6.0",
     "picker": "^0.1.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",

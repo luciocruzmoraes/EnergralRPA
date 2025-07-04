@@ -17,6 +17,7 @@ import { collection, getDocs, addDoc, getDoc, doc } from 'firebase/firestore';
 import NetInfo from '@react-native-community/netinfo';
 import { auth, db } from '../../config/firebase-config';
 import { useRouter } from 'expo-router';
+import moment from 'moment-timezone';  // Importando a biblioteca
 
 const KEY_EQUIP = 'cache_equipamentos';
 const KEY_PEND = 'equipamentosPendentes';
@@ -34,10 +35,10 @@ const STATUS_OPTIONS = [
 export default function Devices() {
   const router = useRouter();
 
-  const [localizacoes, setLocalizacoes] = useState<string[]>([]);
+  const [subestacoes, setSubestacoes] = useState<string[]>([]);  // Alterado de localizacoes para subestacoes
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [equipamentosFiltrados, setEquipamentosFiltrados] = useState<any[]>([]);
-  const [localizacaoSelecionada, setLocalizacaoSelecionada] = useState('');
+  const [subestacaoSelecionada, setSubestacaoSelecionada] = useState('');  // Alterado de localizacaoSelecionada para subestacaoSelecionada
   const [nomeNovoEquipamento, setNomeNovoEquipamento] = useState('');
   const [statusNovoEquipamento, setStatusNovoEquipamento] = useState('pendente');
   const [loading, setLoading] = useState(true);
@@ -56,13 +57,13 @@ export default function Devices() {
   }, []);
 
   useEffect(() => {
-    if (!localizacaoSelecionada) {
+    if (!subestacaoSelecionada) {
       setEquipamentosFiltrados([]);
       return;
     }
-    const filtrados = equipamentos.filter(eq => eq.localizacao === localizacaoSelecionada);
+    const filtrados = equipamentos.filter(eq => eq.subestacao === subestacaoSelecionada);  // Alterado de localizacao para subestacao
     setEquipamentosFiltrados(filtrados);
-  }, [localizacaoSelecionada, equipamentos]);
+  }, [subestacaoSelecionada, equipamentos]);
 
   const logout = async () => {
     try {
@@ -97,13 +98,13 @@ export default function Devices() {
     const online = (await NetInfo.fetch()).isConnected ?? false;
 
     try {
-      const snapshot = await getDocs(collection(db, 'subestacoes'));
+      const snapshot = await getDocs(collection(db, 'subestacoes'));  // Alterado para subestacoes
       const locais = snapshot.docs.map(doc => doc.data().nome).filter(Boolean);
-      setLocalizacoes(locais);
+      setSubestacoes(locais);  // Alterado para subestacoes
       await AsyncStorage.setItem('cache_subestacoes', JSON.stringify(locais));
     } catch {
       const cacheLocais = await AsyncStorage.getItem('cache_subestacoes');
-      if (cacheLocais) setLocalizacoes(JSON.parse(cacheLocais));
+      if (cacheLocais) setSubestacoes(JSON.parse(cacheLocais));  // Alterado para subestacoes
     }
 
     let equipamentosFS: any[] = [];
@@ -113,13 +114,13 @@ export default function Devices() {
         const data = d.data();
         return {
           nome: data.nome,
-          localizacao: data.localizacao,
+          subestacao: data.subestacao,  // Alterado para subestacao
           status: data.status || '',
           criadoPor: data.criadoPor || '',
           validadoPor: data.validadoPor || '',
           pendente: false,
         };
-      }).filter(eq => eq.nome && eq.localizacao);
+      }).filter(eq => eq.nome && eq.subestacao);  // Alterado para subestacao
       await AsyncStorage.setItem(KEY_EQUIP, JSON.stringify(equipamentosFS));
     } catch {
       const cacheEquip = await AsyncStorage.getItem(KEY_EQUIP);
@@ -148,17 +149,17 @@ export default function Devices() {
       return;
     }
 
-    if (!nomeNovoEquipamento || !localizacaoSelecionada || !statusNovoEquipamento) {
+    if (!nomeNovoEquipamento || !subestacaoSelecionada || !statusNovoEquipamento) {  // Alterado para subestacaoSelecionada
       Alert.alert('Erro', 'Preencha todos os campos.');
       return;
     }
 
     const novoEquipamentoBase = {
       nome: nomeNovoEquipamento,
-      localizacao: localizacaoSelecionada,
+      subestacao: subestacaoSelecionada,  // Alterado para subestacao
       criadoPor: user.email,
       status: statusNovoEquipamento,
-      timestamp: new Date().toISOString(),
+      timestamp: moment().tz('America/Sao_Paulo').toISOString(),  // Ajustando para o horário de São Paulo
     };
 
     const online = (await NetInfo.fetch()).isConnected ?? false;
@@ -230,13 +231,13 @@ export default function Devices() {
           </View>
 
           <Picker
-            selectedValue={localizacaoSelecionada}
-            onValueChange={setLocalizacaoSelecionada}
+            selectedValue={subestacaoSelecionada}  // Alterado para subestacaoSelecionada
+            onValueChange={setSubestacaoSelecionada}  // Alterado para subestacaoSelecionada
             style={styles.picker}
             itemStyle={Platform.OS === 'ios' ? styles.pickerItem : {}}
           >
-            <Picker.Item label="Selecione a Localização" value="" />
-            {localizacoes.map((loc, i) => (
+            <Picker.Item label="Selecione a Subestação" value="" />  // Alterado de "Localização" para "Subestação"
+            {subestacoes.map((loc, i) => (  // Alterado para subestacoes
               <Picker.Item key={i} label={loc} value={loc} />
             ))}
           </Picker>
@@ -264,10 +265,10 @@ export default function Devices() {
             <Text style={styles.btnTxt}>Cadastrar Equipamento</Text>
           </TouchableOpacity>
 
-          <Text style={styles.subtitle}>Equipamentos na Localização Selecionada</Text>
+          <Text style={styles.subtitle}>Equipamentos na Subestação Selecionada</Text>  // Alterado para Subestação
 
           {equipamentosFiltrados.length === 0 ? (
-            <Text style={styles.emptyText}>Nenhum equipamento para esta localização.</Text>
+            <Text style={styles.emptyText}>Nenhum equipamento para esta subestação.</Text>  // Alterado para Subestação
           ) : (
             equipamentosFiltrados.map((eq, idx) => (
               <View key={idx} style={[styles.equipamentoCard, eq.pendente && styles.pendente]}>
