@@ -2,6 +2,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from controllers.log_controller import log
 from controllers.dataGet_controller import loopColections
+from controllers.email_controller import sendEmail_Critical
 
 def EvenItems(item):
     #Converts dicts and lists into clean strings for Google Sheets.
@@ -83,6 +84,12 @@ def gSheets():
                 doc_id = item.get("id")
                 if doc_id in existingID:
                     continue
+                
+                
+                if item.get("status") == "Falha Crítica":
+                    print("Entrei no if")
+                    sendEmail_Critical(item); #continue
+                
                 cleanedUpItem = EvenItems(item)
                 row = [cleanedUpItem.get(key, "") for key in headers]
                 currentSheet.append_row(row)
