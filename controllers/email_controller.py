@@ -17,7 +17,7 @@ def sendEmail_Critical(item):
 
     📅 Data: {item.get('data', 'N/A')}
     👤 Usuário: {item.get('usuario', 'N/A')}
-    📍 Localização: {item.get('localizacao', 'N/A')}
+    📍 Localização: {item.get('subestacao', 'N/A')}
     🔧 Equipamento: {item.get('equipamento', 'N/A')}
     🆔 ID de Inspeção: {item.get('id', 'N/A')}
     📌 Status: {item.get('status', 'N/A')}
