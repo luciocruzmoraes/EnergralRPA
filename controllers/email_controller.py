@@ -1,8 +1,8 @@
 from controllers.log_controller import log
 from config.security import email_address, app_password 
-from email.mime.multipart import MIMEMultipart #cria um e-mail com várias partes (texto, anexo, etc.).
-from email.mime.text import MIMEText #cria a parte de texto do e-mail.
-import smtplib # envia e-mails usando protocolo SMTP (como o do Gmail).
+from email.mime.multipart import MIMEMultipart #creates an email (text, attachment, etc.).
+from email.mime.text import MIMEText #creates part of the text of the email
+import smtplib #sends the email using SMTP protocol (like Gmail).
 
 #Function to send the email
 def sendEmail_Critical(item):
